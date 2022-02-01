@@ -1,5 +1,6 @@
 use dirs;
 use std::fs;
+use std::fs::OpenOptions;
 
 pub fn init_log_db() {
     let local_data_dir = match dirs::data_local_dir() {
@@ -7,12 +8,29 @@ pub fn init_log_db() {
         None => panic!("Could not find local data directory"),
     };
     let flapjack_data_dir = local_data_dir.join("flapjack");
-    println!("{:?}", flapjack_data_dir);
-    match fs::create_dir(flapjack_data_dir) {
-        Ok(_) => println!("Created flapjack data directory"),
+    match fs::create_dir(&flapjack_data_dir) {
+        Ok(_) => println!(
+            "Created flapjack data directory at {}",
+            flapjack_data_dir.display()
+        ),
         Err(e) => match e.kind() {
             std::io::ErrorKind::AlreadyExists => (),
             _ => panic!("Could not create flapjack data directory"),
-        }, //println!("Could not create flapjack data directory: {}", e),
+        },
+    }
+    let file_path = &flapjack_data_dir.join("log_db.flap");
+
+    let file = OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .append(true)
+        .open(file_path);
+
+    match file {
+        Ok(_) => println!("Created {}", file_path.display()),
+        Err(e) => match e.kind() {
+            std::io::ErrorKind::AlreadyExists => (),
+            _ => panic!("Could not create log_db.flap"),
+        },
     }
 }
