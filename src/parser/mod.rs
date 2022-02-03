@@ -2,3 +2,5 @@
 const EXAMPLE_LOGDBDATA: &str = "
 
 ";
+
+pub fn 
