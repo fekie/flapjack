@@ -1,3 +1,5 @@
+use regex::Regex;
+
 #[derive(Debug)]
 pub struct DirectiveSequence {
     pub directives: Vec<Directive>,
@@ -16,6 +18,12 @@ pub struct Directive {
     params: Vec<String>,
 }
 
+impl DirectiveSequence {
+    /* pub fn write_sequence_to_file {
+
+    } */
+}
+
 impl DirectiveSequenceBuilder {
     pub fn new(raw_log: String) -> Self {
         // go through a parsing process
@@ -28,12 +36,18 @@ impl DirectiveSequenceBuilder {
 
         for line in &self.lines {
             // we remove and save the first part of the line to be the command
-            let mut split = line
-                .split(" ")
-                .collect::<Vec<&str>>()
-                .into_iter()
-                .map(|param| -> String { param.to_owned() })
-                .collect::<Vec<String>>();
+            /*  let mut split = line
+            .split(" ")
+            .collect::<Vec<&str>>()
+            .into_iter()
+            .map(|param| -> String { param.to_owned() })
+            .collect::<Vec<String>>(); */
+
+            let re = Regex::new(r#"(\S+)|"[^"]+""#).unwrap();
+            let mut split: Vec<String> = re
+                .find_iter(line)
+                .filter_map(|chunk| Some(chunk.as_str().to_owned()))
+                .collect();
             let command = split.remove(0);
             let directive = Directive {
                 command: command,
