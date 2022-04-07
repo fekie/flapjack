@@ -1,11 +1,11 @@
 use flapjack;
-use flapjack::directive_sequence;
+use flapjack::flap_sequence;
 use std::fs;
 
 fn main() {
     // we do this instead of loading a file
     let example_log = read_from_example_file("example_logs/directives/input.flap");
-    let foo = directive_sequence::DirectiveSequenceBuilder::new(example_log).build();
+    let foo = flap_sequence::DirectiveSequenceBuilder::new(example_log).build();
     println!("{:?}", foo);
 }
 

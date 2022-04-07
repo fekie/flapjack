@@ -1,9 +1,17 @@
 use regex::Regex;
 
 #[derive(Debug)]
-pub struct DirectiveSequence {
-    pub directives: Vec<Directive>,
+pub struct FlapSequence {
+    pub flaps: Vec<Flap>,
 }
+
+#[derive(Debug)]
+pub enum Flap {
+    directive(Directive),
+    comment(Comment),
+}
+
+impl std::fmt::Debug for Flap {}
 
 #[derive(Debug)]
 pub struct DirectiveSequenceBuilder {
@@ -18,10 +26,13 @@ pub struct Directive {
     params: Vec<String>,
 }
 
-impl DirectiveSequence {
-    /* pub fn write_sequence_to_file {
+#[derive(Debug)]
+pub struct Comment {
+    string: String,
+}
 
-    } */
+impl FlapSequence {
+    //pub fn deserialize(&mut self) -> String {}
 }
 
 impl DirectiveSequenceBuilder {
@@ -31,7 +42,7 @@ impl DirectiveSequenceBuilder {
         Self { lines }
     }
 
-    pub fn build(&self) -> DirectiveSequence {
+    pub fn build(&self) -> FlapSequence {
         let mut directives: Vec<Directive> = vec![];
 
         for line in &self.lines {
@@ -43,11 +54,17 @@ impl DirectiveSequenceBuilder {
             .map(|param| -> String { param.to_owned() })
             .collect::<Vec<String>>(); */
 
-            let re = Regex::new(r#"(\S+)|"[^"]+""#).unwrap();
+            /* let re = Regex::new(r#"(\S+)|"[^"]+""#).expect("Your regex doesnt work.");
             let mut split: Vec<String> = re
                 .find_iter(line)
                 .filter_map(|chunk| Some(chunk.as_str().to_owned()))
-                .collect();
+                .collect(); */
+
+            let mut split = line
+                .split_whitespace()
+                .map(|x| x.to_owned())
+                .collect::<Vec<String>>();
+
             let command = split.remove(0);
             let directive = Directive {
                 command: command,
@@ -57,7 +74,7 @@ impl DirectiveSequenceBuilder {
             directives.push(directive)
         }
 
-        DirectiveSequence {
+        FlapSequence {
             directives: directives,
         }
     }
