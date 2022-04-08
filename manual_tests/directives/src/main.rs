@@ -1,6 +1,7 @@
 use flapjack;
 use flapjack::flap_sequence;
 use std::fs;
+use std::path::PathBuf;
 
 fn main() {
     // we do this instead of loading a file
@@ -9,6 +10,7 @@ fn main() {
     println!("{:?}", foo);
     let bar = foo.build();
     println!("{:?}", bar);
+    bar.serialize_to_file("meow.flap");
 }
 
 fn read_from_example_file(path: &str) -> String {
