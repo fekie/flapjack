@@ -1,0 +1,3 @@
+# the program will register this line a comment
+CREATE account "Checking (Bank)"
+CREATE account "Savings (Bank)"

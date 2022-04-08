@@ -1,3 +1,5 @@
+use std::fs;
+
 use regex::Regex;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -6,15 +8,15 @@ use regex::Regex;
 /// Directive structure in the log will look like:
 /// INCREMENT checking-bank 46.70 "got paid"
 pub struct Directive {
-    command: String,
-    params: Vec<String>,
+    pub command: String,
+    pub params: Vec<String>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 /// A comment for use in `FlapSequence`s.
 /// Follows the pattern Comment("# this is a comment");
 pub struct Comment {
-    string: String,
+    pub string: String,
 }
 
 impl Comment {
@@ -28,6 +30,7 @@ impl Comment {
 /// A sequence of `Flap`s that each contain either a `Directive` or a `Comment`.
 /// Each flap in the sequence retains its order.
 pub struct FlapSequence {
+    /// A `Vector` of `Flap`s
     pub flaps: Vec<Flap>,
 }
 
@@ -50,26 +53,22 @@ pub struct FlapSequenceBuilder {
 impl FlapSequenceBuilder {
     pub fn new(raw_log: String) -> Self {
         // go through a parsing process
-        let lines = Self::split_and_clean(raw_log);
+        let lines = Self::split_and_clean_raw_log(raw_log);
         Self { lines }
+    }
+
+    pub fn from_file(path: &str) -> Self {
+        let file = fs::read_to_string(path);
+        let content = file.expect(&format!("Can't find file {}", path));
+        Self::new(content)
     }
 
     pub fn build(&mut self) -> FlapSequence {
         let mut flaps: Vec<Flap> = Vec::new();
 
-        for line in self.lines.drain(..) {
+        for mut line in self.lines.drain(..) {
             // this is the regex for splitting on whitespace, unless something is in quotations
-            let re = Regex::new(r#"[^\s"']+|"([^"]*)"|'([^']*)'"#).unwrap();
-            let mut split = re
-                .find_iter(&line)
-                .filter_map(|chunk| Some(chunk.as_str().to_owned()))
-                .collect::<Vec<String>>();
-
-            // remove any quotes left
-            for part in split.iter_mut() {
-                let split_on_quotes = part.split("\"");
-                *part = split_on_quotes.collect();
-            }
+            let mut split = Self::split_and_clean_line(&mut line);
 
             let flap = match line.chars().nth(0).unwrap() {
                 // line is a comment
@@ -95,7 +94,22 @@ impl FlapSequenceBuilder {
         FlapSequence { flaps }
     }
 
-    fn split_and_clean(raw_log: String) -> Vec<String> {
+    fn split_and_clean_line(line: &mut String) -> Vec<String> {
+        let re = Regex::new(r#"[^\s"']+|"([^"]*)"|'([^']*)'"#).unwrap();
+        let mut split = re
+            .find_iter(&line)
+            .filter_map(|chunk| Some(chunk.as_str().to_owned()))
+            .collect::<Vec<String>>();
+
+        // remove any quotes left
+        for part in split.iter_mut() {
+            let split_on_quotes = part.split("\"");
+            *part = split_on_quotes.collect();
+        }
+        split
+    }
+
+    fn split_and_clean_raw_log(raw_log: String) -> Vec<String> {
         let no_carriage_returns = Self::remove_carriage_returns(&raw_log);
         let split = no_carriage_returns.split("\n").collect::<Vec<&str>>();
         let mut cleaned: Vec<String> = Vec::new();
@@ -134,10 +148,10 @@ mod tests {
         CREATE account \"Savings (Bank)\"";
 
         let parsed_carriage =
-            FlapSequenceBuilder::split_and_clean(log_with_carriage_returns.to_owned());
+            FlapSequenceBuilder::split_and_clean_raw_log(log_with_carriage_returns.to_owned());
 
         let parsed_no_carriage =
-            FlapSequenceBuilder::split_and_clean(log_without_carriage_returns.to_owned());
+            FlapSequenceBuilder::split_and_clean_raw_log(log_without_carriage_returns.to_owned());
 
         assert_eq!(parsed_carriage, parsed_no_carriage);
     }
