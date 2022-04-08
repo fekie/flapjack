@@ -1,102 +1,176 @@
 use regex::Regex;
 
-#[derive(Debug)]
-pub struct FlapSequence {
-    pub flaps: Vec<Flap>,
-}
-
-#[derive(Debug)]
-pub enum Flap {
-    directive(Directive),
-    comment(Comment),
-}
-
-impl std::fmt::Debug for Flap {}
-
-#[derive(Debug)]
-pub struct DirectiveSequenceBuilder {
-    lines: Vec<String>,
-}
-
-// directive structure in the log will look like:
-// INCREMENT checking-bank 46.70 "got paid"
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
+/// A command and params for use in `FlapSequence`s.
+/// Follows the pattern Directive { command: "CREATE", params: ["account", "Checking-Bank"] }.
+/// Directive structure in the log will look like:
+/// INCREMENT checking-bank 46.70 "got paid"
 pub struct Directive {
     command: String,
     params: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
+/// A comment for use in `FlapSequence`s.
+/// Follows the pattern Comment("# this is a comment");
 pub struct Comment {
     string: String,
 }
 
-impl FlapSequence {
-    //pub fn deserialize(&mut self) -> String {}
+impl Comment {
+    pub fn new(s: String) -> Comment {
+        Self { string: s }
+    }
 }
 
-impl DirectiveSequenceBuilder {
+#[warn(missing_docs)]
+#[derive(Debug)]
+/// A sequence of `Flap`s that each contain either a `Directive` or a `Comment`.
+/// Each flap in the sequence retains its order.
+pub struct FlapSequence {
+    pub flaps: Vec<Flap>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+/// Contains either a Directive or a Comment
+pub enum Flap {
+    Directive(Directive),
+    Comment(Comment),
+}
+
+#[warn(missing_docs)]
+#[derive(Debug)]
+/// A builder to help create a `FlapSequence`.
+/// This builder takes a raw string, removes carriage returns, splits it by lines,
+/// parses the lines into `Comment`s and `Directive`s, and creates a `FlapSequence`.
+pub struct FlapSequenceBuilder {
+    lines: Vec<String>,
+}
+
+impl FlapSequenceBuilder {
     pub fn new(raw_log: String) -> Self {
         // go through a parsing process
-        let lines = DirectiveSequenceBuilder::split_and_clean(raw_log);
+        let lines = Self::split_and_clean(raw_log);
         Self { lines }
     }
 
-    pub fn build(&self) -> FlapSequence {
-        let mut directives: Vec<Directive> = vec![];
+    pub fn build(&mut self) -> FlapSequence {
+        let mut flaps: Vec<Flap> = Vec::new();
 
-        for line in &self.lines {
-            // we remove and save the first part of the line to be the command
-            /*  let mut split = line
-            .split(" ")
-            .collect::<Vec<&str>>()
-            .into_iter()
-            .map(|param| -> String { param.to_owned() })
-            .collect::<Vec<String>>(); */
-
-            /* let re = Regex::new(r#"(\S+)|"[^"]+""#).expect("Your regex doesnt work.");
-            let mut split: Vec<String> = re
-                .find_iter(line)
+        for line in self.lines.drain(..) {
+            // this is the regex for splitting on whitespace, unless something is in quotations
+            let re = Regex::new(r#"[^\s"']+|"([^"]*)"|'([^']*)'"#).unwrap();
+            let mut split = re
+                .find_iter(&line)
                 .filter_map(|chunk| Some(chunk.as_str().to_owned()))
-                .collect(); */
-
-            let mut split = line
-                .split_whitespace()
-                .map(|x| x.to_owned())
                 .collect::<Vec<String>>();
 
-            let command = split.remove(0);
-            let directive = Directive {
-                command: command,
-                params: split,
+            // remove any quotes left
+            for part in split.iter_mut() {
+                let split_on_quotes = part.split("\"");
+                *part = split_on_quotes.collect();
+            }
+
+            let flap = match line.chars().nth(0).unwrap() {
+                // line is a comment
+                '#' => {
+                    let comment = Comment::new(line.to_string());
+                    Flap::Comment(comment)
+                }
+                // line is a directive
+                _ => {
+                    let command = split.remove(0);
+                    let directive = Directive {
+                        command: command,
+                        params: split,
+                    };
+
+                    Flap::Directive(directive)
+                }
             };
 
-            directives.push(directive)
+            flaps.push(flap)
         }
 
-        FlapSequence {
-            directives: directives,
-        }
+        FlapSequence { flaps }
     }
 
     fn split_and_clean(raw_log: String) -> Vec<String> {
-        let split = raw_log.split("\r\n").collect::<Vec<&str>>();
-        let mut cleaned: Vec<String> = vec![];
+        let no_carriage_returns = Self::remove_carriage_returns(&raw_log);
+        let split = no_carriage_returns.split("\n").collect::<Vec<&str>>();
+        let mut cleaned: Vec<String> = Vec::new();
 
-        for part in split {
-            if (DirectiveSequenceBuilder::remove_whitespace(part) == "")
-                || (part.chars().nth(0).unwrap() == '#')
-            {
+        for line in split {
+            if Self::remove_whitespace(line) == "" {
                 continue;
             }
-            //println!("{:?}", part);
-            cleaned.push(part.to_owned());
+            cleaned.push(line.to_owned());
         }
 
         cleaned
     }
 
+    fn remove_carriage_returns(s: &str) -> String {
+        s.split("\r").collect()
+    }
+
     fn remove_whitespace(s: &str) -> String {
         s.split_whitespace().collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::flap_sequence::{Comment, Directive, Flap, FlapSequenceBuilder};
+
+    #[test]
+    fn test_for_carriage_return_discrimination() {
+        let log_with_carriage_returns = "# the program will register this line a comment\r
+        CREATE account \"Checking (Bank)\"\r
+        CREATE account \"Savings (Bank)\"\r";
+
+        let log_without_carriage_returns = "# the program will register this line a comment
+        CREATE account \"Checking (Bank)\"
+        CREATE account \"Savings (Bank)\"";
+
+        let parsed_carriage =
+            FlapSequenceBuilder::split_and_clean(log_with_carriage_returns.to_owned());
+
+        let parsed_no_carriage =
+            FlapSequenceBuilder::split_and_clean(log_without_carriage_returns.to_owned());
+
+        assert_eq!(parsed_carriage, parsed_no_carriage);
+    }
+
+    #[test]
+    fn test_builder() {
+        let log = "# the program will register this line a comment
+            CREATE account \"Checking (Bank)\"
+            CREATE account \"Savings (Bank)\"";
+
+        let seq = FlapSequenceBuilder::new(log.to_string()).build();
+
+        assert_eq!(
+            seq.flaps[0],
+            Flap::Comment(Comment::new(
+                "# the program will register this line a comment".to_owned()
+            ))
+        );
+
+        assert_eq!(
+            seq.flaps[1],
+            Flap::Directive(Directive {
+                command: "CREATE".to_owned(),
+                params: vec!["account".to_owned(), "Checking (Bank)".to_owned()]
+            })
+        );
+
+        assert_eq!(
+            seq.flaps[2],
+            Flap::Directive(Directive {
+                command: "CREATE".to_owned(),
+                params: vec!["account".to_owned(), "Savings (Bank)".to_owned()]
+            })
+        );
     }
 }
