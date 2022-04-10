@@ -4,8 +4,8 @@ use std::io::Write;
 
 use self::flapjack::{Command, FlapJack};
 
-pub mod flap_sequence_builder;
 pub mod flapjack;
+pub mod flapjack_stack_builder;
 
 /// A sequence of `Flap`s that each contain either a `Directive` or a `Comment`.
 /// Each flap in the sequence retains its order.
@@ -156,7 +156,7 @@ impl FlapJackDb {
 
 #[cfg(test)]
 mod tests {
-    use crate::flapjack_stack::flap_sequence_builder::FlapSequenceBuilder;
+    use crate::flapjack_stack::flapjack_stack_builder::FlapJackStackBuilder;
 
     #[test]
     fn test_serialization() {
@@ -166,10 +166,10 @@ mod tests {
         INCREMENT \"Checking (Bank)\" 50 \"this is a comment for this transactions\"
         ";
 
-        let seq = FlapSequenceBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log).build();
         let serialized_first = seq.serialize();
 
-        let seq_rebuilt = FlapSequenceBuilder::new(&serialized_first).build();
+        let seq_rebuilt = FlapJackStackBuilder::new(&serialized_first).build();
         let serialized_again = seq_rebuilt.serialize();
 
         assert_eq!(serialized_first, serialized_again)
@@ -178,7 +178,7 @@ mod tests {
     #[test]
     fn test_db_wallet_creation() {
         let log = "# the program will register this line a comment\nCREATE \"Checking (Bank)\"\nCREATE \"Savings (Bank)\"";
-        let seq = FlapSequenceBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log).build();
 
         seq.db
             .wallet_amounts
@@ -196,7 +196,7 @@ mod tests {
         INCREMENT \"Checking (Bank)\" 25.50 \"this is another comment for the transaction\"
         ";
 
-        let seq = FlapSequenceBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log).build();
         match seq.db.wallet_amounts.get("Checking (Bank)") {
             Some(balance) => {
                 assert_eq!(*balance, 75.5);
@@ -227,7 +227,7 @@ mod tests {
         SET \"Savings (Bank)\" 200 \"meow\"
         ";
 
-        let seq = FlapSequenceBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log).build();
         match seq.db.wallet_amounts.get("Checking (Bank)") {
             Some(balance) => {
                 assert_eq!(*balance, 75.5);
@@ -259,7 +259,7 @@ mod tests {
         DESTROY \"Savings (Bank)\"
         ";
 
-        let seq = FlapSequenceBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log).build();
 
         if let Some(_) = seq.db.wallet_amounts.get("Savings (Bank)") {
             panic!("Wallet was not destroyed!")
@@ -278,7 +278,7 @@ mod tests {
         DECREMENT \"Checking (Bank)\" 10.5 \"bought something\"
         ";
 
-        let seq = FlapSequenceBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log).build();
         match seq.db.wallet_amounts.get("Checking (Bank)") {
             Some(balance) => {
                 assert_eq!(*balance, 65.0);

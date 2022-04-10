@@ -8,11 +8,11 @@ use crate::flapjack_stack::FlapJackStack;
 /// This builder takes a raw string, removes carriage returns, splits it by lines,
 /// parses the lines into `Comment`s and `Directive`s, and creates a `FlapJackStack`.
 #[derive(Debug)]
-pub struct FlapSequenceBuilder {
+pub struct FlapJackStackBuilder {
     lines: Vec<String>,
 }
 
-impl FlapSequenceBuilder {
+impl FlapJackStackBuilder {
     pub fn new(raw_log: &str) -> Self {
         // go through a parsing process
         let lines = Self::split_and_clean_raw_log(raw_log);
@@ -105,8 +105,8 @@ impl FlapSequenceBuilder {
 
 #[cfg(test)]
 mod test {
-    use crate::flapjack_stack::flap_sequence_builder::FlapSequenceBuilder;
     use crate::flapjack_stack::flapjack::{Command, Comment, Directive, FlapJack};
+    use crate::flapjack_stack::flapjack_stack_builder::FlapJackStackBuilder;
 
     #[test]
     fn test_for_carriage_return_discrimination() {
@@ -119,10 +119,10 @@ mod test {
         CREATE account \"Savings (Bank)\"";
 
         let parsed_carriage =
-            FlapSequenceBuilder::split_and_clean_raw_log(log_with_carriage_returns);
+            FlapJackStackBuilder::split_and_clean_raw_log(log_with_carriage_returns);
 
         let parsed_no_carriage =
-            FlapSequenceBuilder::split_and_clean_raw_log(log_without_carriage_returns);
+            FlapJackStackBuilder::split_and_clean_raw_log(log_without_carriage_returns);
 
         assert_eq!(parsed_carriage, parsed_no_carriage);
     }
@@ -133,7 +133,7 @@ mod test {
             CREATE account \"Checking (Bank)\"
             CREATE account \"Savings (Bank)\"";
 
-        let seq = FlapSequenceBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log).build();
 
         assert_eq!(
             seq.flaps[0],

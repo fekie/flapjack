@@ -80,7 +80,7 @@ impl Directive {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-/// A comment for use in `FlapSequence`s.
+/// A comment for use in `FlapJackStack`s.
 /// Follows the pattern Comment("# this is a comment");
 pub struct Comment {
     pub string: String,

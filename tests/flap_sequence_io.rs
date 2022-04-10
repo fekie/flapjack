@@ -1,5 +1,5 @@
-use flapjack::flapjack_stack::flap_sequence_builder::FlapSequenceBuilder;
 use flapjack::flapjack_stack::flapjack::{Command, Comment, Directive, FlapJack};
+use flapjack::flapjack_stack::flapjack_stack_builder::FlapJackStackBuilder;
 use std::env;
 use std::fs;
 
@@ -8,7 +8,7 @@ const INPUT_FLAP_PATH: &str = "tests/test_files/serialize_deserialize/input.flap
 
 #[test]
 fn flaps_from_file() {
-    let mut builder = FlapSequenceBuilder::from_file(INPUT_FLAP_PATH);
+    let mut builder = FlapJackStackBuilder::from_file(INPUT_FLAP_PATH);
     let seq = builder.build();
 
     assert_eq!(
@@ -37,7 +37,7 @@ fn flaps_from_file() {
 
 #[test]
 fn flaps_to_file() {
-    let seq = FlapSequenceBuilder::from_file(INPUT_FLAP_PATH).build();
+    let seq = FlapJackStackBuilder::from_file(INPUT_FLAP_PATH).build();
     let serialized = seq.serialize();
     let temp_directory = env::temp_dir();
     let temp_path = temp_directory.join("example_log.flap");
