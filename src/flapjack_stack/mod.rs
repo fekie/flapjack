@@ -66,64 +66,91 @@ impl FlapJackDb {
 
         for flapjack in flaps {
             match flapjack {
-                FlapJack::Comment(_comment) => {
-                    // do nothing
-                }
+                FlapJack::Comment(_comment) => {}
                 FlapJack::Directive(directive) => {
                     let command = &directive.command;
                     let params = directive.params.as_slice();
 
                     match command {
-                        Command::CREATE => {
-                            let wallet_type =
-                                params.get(0).expect("Wallet type argument was not found!");
-
-                            db.wallet_amounts.insert(wallet_type.to_string(), 0.0);
-                        }
-                        Command::INCREMENT => {
-                            let wallet_type =
-                                params.get(0).expect("Wallet type argument was not found!");
-
-                            let amount = params
-                                .get(1)
-                                .expect("Amount was not found")
-                                .parse::<f64>()
-                                .expect("Amount could not be parsed to a float.");
-
-                            match db.wallet_amounts.get_mut(&wallet_type.to_string()) {
-                                Some(wallet_balance) => {
-                                    *wallet_balance += amount;
-                                }
-                                None => {
-                                    panic!("Wallet type {} does not exist!", wallet_type)
-                                }
-                            };
-                        }
-                        Command::SET => {
-                            let wallet_type =
-                                params.get(0).expect("Wallet type argument was not found!");
-
-                            let amount = params
-                                .get(1)
-                                .expect("Amount was not found")
-                                .parse::<f64>()
-                                .expect("Amount could not be parsed to a float.");
-
-                            match db.wallet_amounts.get_mut(&wallet_type.to_string()) {
-                                Some(wallet_balance) => {
-                                    *wallet_balance = amount;
-                                }
-                                None => {
-                                    panic!("Wallet type {} does not exist!", wallet_type)
-                                }
-                            };
-                        }
+                        Command::CREATE => db.command_create(params),
+                        Command::INCREMENT => db.command_increment(params),
+                        Command::SET => db.command_set(params),
+                        Command::DESTROY => db.command_destroy(params),
+                        Command::DECREMENT => db.command_decrement(params),
                     }
                 }
             }
         }
 
         db
+    }
+
+    pub fn command_create(&mut self, params: &[String]) {
+        let wallet_type = params.get(0).expect("Wallet type argument was not found!");
+
+        self.wallet_amounts.insert(wallet_type.to_string(), 0.0);
+    }
+
+    pub fn command_increment(&mut self, params: &[String]) {
+        let wallet_type = params.get(0).expect("Wallet type argument was not found!");
+
+        let amount = params
+            .get(1)
+            .expect("Amount was not found")
+            .parse::<f64>()
+            .expect("Amount could not be parsed to a float.");
+
+        match self.wallet_amounts.get_mut(&wallet_type.to_string()) {
+            Some(wallet_balance) => {
+                *wallet_balance += amount;
+            }
+            None => {
+                panic!("Wallet type {} does not exist!", wallet_type)
+            }
+        };
+    }
+
+    pub fn command_set(&mut self, params: &[String]) {
+        let wallet_type = params.get(0).expect("Wallet type argument was not found!");
+
+        let amount = params
+            .get(1)
+            .expect("Amount was not found")
+            .parse::<f64>()
+            .expect("Amount could not be parsed to a float.");
+
+        match self.wallet_amounts.get_mut(&wallet_type.to_string()) {
+            Some(wallet_balance) => {
+                *wallet_balance = amount;
+            }
+            None => {
+                panic!("Wallet type {} does not exist!", wallet_type)
+            }
+        };
+    }
+
+    pub fn command_destroy(&mut self, params: &[String]) {
+        let wallet_type = params.get(0).expect("Wallet type argument was not found!");
+        self.wallet_amounts.remove(wallet_type);
+    }
+
+    pub fn command_decrement(&mut self, params: &[String]) {
+        let wallet_type = params.get(0).expect("Wallet type argument was not found!");
+
+        let amount = params
+            .get(1)
+            .expect("Amount was not found")
+            .parse::<f64>()
+            .expect("Amount could not be parsed to a float.");
+
+        match self.wallet_amounts.get_mut(&wallet_type.to_string()) {
+            Some(wallet_balance) => {
+                *wallet_balance -= amount;
+            }
+            None => {
+                panic!("Wallet type {} does not exist!", wallet_type)
+            }
+        };
     }
 }
 
@@ -213,6 +240,48 @@ mod tests {
         match seq.db.wallet_amounts.get("Savings (Bank)") {
             Some(balance) => {
                 assert_eq!(*balance, 200.0);
+            }
+            None => {
+                panic!("Wallet does not exist!")
+            }
+        }
+    }
+
+    #[test]
+    fn test_wallet_destroy() {
+        let log = "
+        CREATE \"Checking (Bank)\"
+        CREATE \"Savings (Bank)\"
+        INCREMENT \"Checking (Bank)\" 50 \"this is a comment for this transactions\"
+        INCREMENT \"Savings (Bank)\" 73
+        INCREMENT \"Checking (Bank)\" 25.50 \"this is another comment for the transaction\"
+        SET \"Savings (Bank)\" 200 \"meow\"
+        DESTROY \"Savings (Bank)\"
+        ";
+
+        let seq = FlapSequenceBuilder::new(log).build();
+
+        if let Some(_) = seq.db.wallet_amounts.get("Savings (Bank)") {
+            panic!("Wallet was not destroyed!")
+        }
+    }
+
+    #[test]
+    fn test_wallet_decrement() {
+        let log = "
+        CREATE \"Checking (Bank)\"
+        CREATE \"Savings (Bank)\"
+        INCREMENT \"Checking (Bank)\" 50 \"this is a comment for this transactions\"
+        INCREMENT \"Savings (Bank)\" 73
+        INCREMENT \"Checking (Bank)\" 25.50 \"this is another comment for the transaction\"
+        SET \"Savings (Bank)\" 200 \"meow\"
+        DECREMENT \"Checking (Bank)\" 10.5 \"bought something\"
+        ";
+
+        let seq = FlapSequenceBuilder::new(log).build();
+        match seq.db.wallet_amounts.get("Checking (Bank)") {
+            Some(balance) => {
+                assert_eq!(*balance, 65.0);
             }
             None => {
                 panic!("Wallet does not exist!")

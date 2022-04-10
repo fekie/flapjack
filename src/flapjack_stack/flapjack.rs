@@ -5,6 +5,8 @@ pub enum Command {
     CREATE,
     INCREMENT,
     SET,
+    DESTROY,
+    DECREMENT,
 }
 
 impl fmt::Display for Command {
@@ -18,6 +20,12 @@ impl fmt::Display for Command {
             }
             Self::SET => {
                 write!(f, "SET")
+            }
+            Self::DESTROY => {
+                write!(f, "DESTROY")
+            }
+            Self::DECREMENT => {
+                write!(f, "DECREMENT")
             }
         }
     }

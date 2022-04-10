@@ -5,3 +5,5 @@ INCREMENT "Checking (Bank)" 50 "this is a comment for this transactions"
 INCREMENT "Savings (Bank)" 40
 INCREMENT "Checking (Bank)" 25.50 "this is another comment for the transaction"
 SET "Savings (Bank)" 200 "felt like it"
+DESTROY "Savings (Bank)" "account closed"
+DECREMENT "Checking (Bank)" 10.5 "bought something"

@@ -45,6 +45,8 @@ impl FlapSequenceBuilder {
                         "CREATE" => Command::CREATE,
                         "INCREMENT" => Command::INCREMENT,
                         "SET" => Command::SET,
+                        "DESTROY" => Command::DESTROY,
+                        "DECREMENT" => Command::DECREMENT,
                         _ => panic!("Command \"{}\" does not exist!", command_string),
                     };
                     let directive = Directive {
