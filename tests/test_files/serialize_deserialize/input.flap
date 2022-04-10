@@ -1,3 +1,5 @@
 # the program will register this line a comment
-CREATE account "Checking (Bank)"
-CREATE account "Savings (Bank)"
+CREATE "Checking (Bank)"
+CREATE "Savings (Bank)"
+INCREMENT "Checking (Bank)" 50 "this is a comment for this transactions"
+INCREMENT "Checking (Bank)" 25.50 "this is another comment for the transaction"

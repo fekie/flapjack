@@ -7,15 +7,12 @@ use self::flapjack::{Command, FlapJack};
 pub mod flap_sequence_builder;
 pub mod flapjack;
 
-const CREATION_TYPES: [&str; 1] = ["account"];
-
 /// A sequence of `Flap`s that each contain either a `Directive` or a `Comment`.
 /// Each flap in the sequence retains its order.
-#[warn(missing_docs)]
 #[derive(Debug)]
 pub struct FlapJackStack {
     pub flaps: Vec<FlapJack>,
-    db: FlapJackDb,
+    pub db: FlapJackDb,
 }
 
 impl FlapJackStack {
@@ -51,30 +48,25 @@ impl FlapJackStack {
 
 #[derive(Debug)]
 pub struct FlapJackDb {
-    // if the transaction does not exist, the program will panic
-    available_transaction_types: Vec<String>,
     // each type of transaction will have a vector of transactions in order
-    transactions: HashMap<String, Vec<TransactionInfo>>,
+    pub wallet_amounts: HashMap<String, f64>,
 }
 
 impl FlapJackDb {
     pub fn new() -> Self {
         Self {
-            available_transaction_types: Vec::new(),
-            transactions: HashMap::new(),
+            wallet_amounts: HashMap::new(),
         }
     }
 
     pub fn from_flaps(flaps: &Vec<FlapJack>) -> Self {
-        let db = Self {
-            available_transaction_types: Vec::new(),
-            transactions: HashMap::new(),
+        let mut db = Self {
+            wallet_amounts: HashMap::new(),
         };
 
-        // TODO: make this work
         for flapjack in flaps {
             match flapjack {
-                FlapJack::Comment(comment) => {
+                FlapJack::Comment(_comment) => {
                     // do nothing
                 }
                 FlapJack::Directive(directive) => {
@@ -83,24 +75,48 @@ impl FlapJackDb {
 
                     match command {
                         Command::CREATE => {
-                            let create_type = params
-                                .get(0)
-                                .expect("Creation type argument was not found!");
+                            let wallet_type =
+                                params.get(0).expect("Wallet type argument was not found!");
 
-                            let mut found = false;
-                            for ctype in CREATION_TYPES {
-                                if ctype == create_type {
-                                    found = true;
-                                    break;
+                            db.wallet_amounts.insert(wallet_type.to_string(), 0.0);
+                        }
+                        Command::INCREMENT => {
+                            let wallet_type =
+                                params.get(0).expect("Wallet type argument was not found!");
+
+                            let amount = params
+                                .get(1)
+                                .expect("Amount was not found")
+                                .parse::<f64>()
+                                .expect("Amount could not be parsed to a float.");
+
+                            match db.wallet_amounts.get_mut(&wallet_type.to_string()) {
+                                Some(wallet_balance) => {
+                                    *wallet_balance += amount;
                                 }
-                            }
+                                None => {
+                                    panic!("Wallet type {} does not exist!", wallet_type)
+                                }
+                            };
+                        }
+                        Command::SET => {
+                            let wallet_type =
+                                params.get(0).expect("Wallet type argument was not found!");
 
-                            if !found {
-                                panic!("An incorrect creation type was provided!")
-                            }
+                            let amount = params
+                                .get(1)
+                                .expect("Amount was not found")
+                                .parse::<f64>()
+                                .expect("Amount could not be parsed to a float.");
 
-                            // i stopped here
-                            todo!()
+                            match db.wallet_amounts.get_mut(&wallet_type.to_string()) {
+                                Some(wallet_balance) => {
+                                    *wallet_balance = amount;
+                                }
+                                None => {
+                                    panic!("Wallet type {} does not exist!", wallet_type)
+                                }
+                            };
                         }
                     }
                 }
@@ -111,25 +127,96 @@ impl FlapJackDb {
     }
 }
 
-#[derive(Debug)]
-pub struct TransactionInfo {}
-
 #[cfg(test)]
 mod tests {
     use crate::flapjack_stack::flap_sequence_builder::FlapSequenceBuilder;
 
     #[test]
     fn test_serialization() {
-        let log = "# the program will register this line a comment\nCREATE account \"Checking (Bank)\"\nCREATE account \"Savings (Bank)\"";
+        let log = "
+        # the program will register this line a comment
+        CREATE \"Checking (Bank)\"
+        INCREMENT \"Checking (Bank)\" 50 \"this is a comment for this transactions\"
+        ";
 
-        let seq = FlapSequenceBuilder::new(log.to_string()).build();
-        let serialized = seq.serialize();
+        let seq = FlapSequenceBuilder::new(log).build();
+        let serialized_first = seq.serialize();
 
-        assert_eq!(serialized, log);
-
-        let seq_rebuilt = FlapSequenceBuilder::new(serialized.clone()).build();
+        let seq_rebuilt = FlapSequenceBuilder::new(&serialized_first).build();
         let serialized_again = seq_rebuilt.serialize();
 
-        assert_eq!(serialized, serialized_again)
+        assert_eq!(serialized_first, serialized_again)
+    }
+
+    #[test]
+    fn test_db_wallet_creation() {
+        let log = "# the program will register this line a comment\nCREATE \"Checking (Bank)\"\nCREATE \"Savings (Bank)\"";
+        let seq = FlapSequenceBuilder::new(log).build();
+
+        seq.db
+            .wallet_amounts
+            .get(&"Checking (Bank)".to_owned())
+            .expect("This key does not exist!");
+    }
+
+    #[test]
+    fn test_db_wallet_increment() {
+        let log = "
+        CREATE \"Checking (Bank)\"
+        CREATE \"Savings (Bank)\"
+        INCREMENT \"Checking (Bank)\" 50 \"this is a comment for this transactions\"
+        INCREMENT \"Savings (Bank)\" 73
+        INCREMENT \"Checking (Bank)\" 25.50 \"this is another comment for the transaction\"
+        ";
+
+        let seq = FlapSequenceBuilder::new(log).build();
+        match seq.db.wallet_amounts.get("Checking (Bank)") {
+            Some(balance) => {
+                assert_eq!(*balance, 75.5);
+            }
+            None => {
+                panic!("Wallet does not exist!")
+            }
+        }
+
+        match seq.db.wallet_amounts.get("Savings (Bank)") {
+            Some(balance) => {
+                assert_eq!(*balance, 73.0);
+            }
+            None => {
+                panic!("Wallet does not exist!")
+            }
+        }
+    }
+
+    #[test]
+    fn test_wallet_set() {
+        let log = "
+        CREATE \"Checking (Bank)\"
+        CREATE \"Savings (Bank)\"
+        INCREMENT \"Checking (Bank)\" 50 \"this is a comment for this transactions\"
+        INCREMENT \"Savings (Bank)\" 73
+        INCREMENT \"Checking (Bank)\" 25.50 \"this is another comment for the transaction\"
+        SET \"Savings (Bank)\" 200 \"meow\"
+        ";
+
+        let seq = FlapSequenceBuilder::new(log).build();
+        match seq.db.wallet_amounts.get("Checking (Bank)") {
+            Some(balance) => {
+                assert_eq!(*balance, 75.5);
+            }
+            None => {
+                panic!("Wallet does not exist!")
+            }
+        }
+
+        match seq.db.wallet_amounts.get("Savings (Bank)") {
+            Some(balance) => {
+                assert_eq!(*balance, 200.0);
+            }
+            None => {
+                panic!("Wallet does not exist!")
+            }
+        }
     }
 }

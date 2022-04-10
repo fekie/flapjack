@@ -1,19 +1,13 @@
 use flapjack;
 use flapjack::flapjack_stack;
-use std::env;
-use std::fs;
-use std::path::PathBuf;
 
 fn main() {
     // we do this instead of loading a file
     let example_log = read_from_example_file("example_logs/directives/input.flap");
-    let mut foo = flapjack_stack::FlapSequenceBuilder::new(example_log);
-    println!("{:?}", foo);
+    let mut foo = flapjack_stack::flap_sequence_builder::FlapSequenceBuilder::new(example_log);
     let bar = foo.build();
-    println!("{:?}", bar);
-    bar.serialize_to_file("meow.flap");
-    let temp_directory = env::temp_dir();
-    println!("{:?}", temp_directory);
+    bar.serialize_to_file("example_logs/directives/output.flap");
+    println!("{:?}", bar.db);
 }
 
 fn read_from_example_file(path: &str) -> String {

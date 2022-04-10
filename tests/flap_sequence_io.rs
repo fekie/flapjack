@@ -7,9 +7,10 @@ use std::fs;
 const INPUT_FLAP_PATH: &str = "tests/test_files/serialize_deserialize/input.flap";
 
 #[test]
-fn flap_sequence_from_file() {
+fn flaps_from_file() {
     let mut builder = FlapSequenceBuilder::from_file(INPUT_FLAP_PATH);
     let seq = builder.build();
+
     assert_eq!(
         seq.flaps[0],
         FlapJack::Comment(Comment::new(
@@ -21,7 +22,7 @@ fn flap_sequence_from_file() {
         seq.flaps[1],
         FlapJack::Directive(Directive {
             command: Command::CREATE,
-            params: vec!["account".to_owned(), "Checking (Bank)".to_owned()]
+            params: vec!["Checking (Bank)".to_owned()]
         })
     );
 
@@ -29,13 +30,13 @@ fn flap_sequence_from_file() {
         seq.flaps[2],
         FlapJack::Directive(Directive {
             command: Command::CREATE,
-            params: vec!["account".to_owned(), "Savings (Bank)".to_owned()]
+            params: vec!["Savings (Bank)".to_owned()]
         })
     );
 }
 
 #[test]
-fn flap_sequence_to_file() {
+fn flaps_to_file() {
     let seq = FlapSequenceBuilder::from_file(INPUT_FLAP_PATH).build();
     let serialized = seq.serialize();
     let temp_directory = env::temp_dir();

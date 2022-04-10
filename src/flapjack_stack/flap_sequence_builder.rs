@@ -2,19 +2,18 @@ use regex::Regex;
 use std::fs;
 
 use crate::flapjack_stack::flapjack::{Command, Comment, Directive, FlapJack};
-use crate::flapjack_stack::{FlapJackDb, FlapJackStack};
+use crate::flapjack_stack::FlapJackStack;
 
 /// A builder to help create a `FlapJackStack`.
 /// This builder takes a raw string, removes carriage returns, splits it by lines,
 /// parses the lines into `Comment`s and `Directive`s, and creates a `FlapJackStack`.
-#[warn(missing_docs)]
 #[derive(Debug)]
 pub struct FlapSequenceBuilder {
     lines: Vec<String>,
 }
 
 impl FlapSequenceBuilder {
-    pub fn new(raw_log: String) -> Self {
+    pub fn new(raw_log: &str) -> Self {
         // go through a parsing process
         let lines = Self::split_and_clean_raw_log(raw_log);
         Self { lines }
@@ -23,7 +22,7 @@ impl FlapSequenceBuilder {
     pub fn from_file(path: &str) -> Self {
         let file = fs::read_to_string(path);
         let content = file.expect(&format!("Can't find file {}", path));
-        Self::new(content)
+        Self::new(&content)
     }
 
     pub fn build(&mut self) -> FlapJackStack {
@@ -33,7 +32,7 @@ impl FlapSequenceBuilder {
             // this is the regex for splitting on whitespace, unless something is in quotations
             let mut split = Self::split_and_clean_line(&mut line);
 
-            let flap = match line.chars().nth(0).unwrap() {
+            let flap = match split[0].chars().nth(0).unwrap() {
                 // line is a comment
                 '#' => {
                     let comment = Comment::new(line.to_string());
@@ -44,6 +43,8 @@ impl FlapSequenceBuilder {
                     let command_string: &str = &split.remove(0);
                     let command = match command_string {
                         "CREATE" => Command::CREATE,
+                        "INCREMENT" => Command::INCREMENT,
+                        "SET" => Command::SET,
                         _ => panic!("Command \"{}\" does not exist!", command_string),
                     };
                     let directive = Directive {
@@ -76,7 +77,7 @@ impl FlapSequenceBuilder {
         split
     }
 
-    fn split_and_clean_raw_log(raw_log: String) -> Vec<String> {
+    fn split_and_clean_raw_log(raw_log: &str) -> Vec<String> {
         let no_carriage_returns = Self::remove_carriage_returns(&raw_log);
         let split = no_carriage_returns.split("\n").collect::<Vec<&str>>();
         let mut cleaned: Vec<String> = Vec::new();
@@ -116,10 +117,10 @@ mod test {
         CREATE account \"Savings (Bank)\"";
 
         let parsed_carriage =
-            FlapSequenceBuilder::split_and_clean_raw_log(log_with_carriage_returns.to_owned());
+            FlapSequenceBuilder::split_and_clean_raw_log(log_with_carriage_returns);
 
         let parsed_no_carriage =
-            FlapSequenceBuilder::split_and_clean_raw_log(log_without_carriage_returns.to_owned());
+            FlapSequenceBuilder::split_and_clean_raw_log(log_without_carriage_returns);
 
         assert_eq!(parsed_carriage, parsed_no_carriage);
     }
@@ -130,7 +131,7 @@ mod test {
             CREATE account \"Checking (Bank)\"
             CREATE account \"Savings (Bank)\"";
 
-        let seq = FlapSequenceBuilder::new(log.to_string()).build();
+        let seq = FlapSequenceBuilder::new(log).build();
 
         assert_eq!(
             seq.flaps[0],

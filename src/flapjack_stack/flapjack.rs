@@ -3,6 +3,8 @@ use std::fmt;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Command {
     CREATE,
+    INCREMENT,
+    SET,
 }
 
 impl fmt::Display for Command {
@@ -10,6 +12,12 @@ impl fmt::Display for Command {
         match self {
             Self::CREATE => {
                 write!(f, "CREATE")
+            }
+            Self::INCREMENT => {
+                write!(f, "INCREMENT")
+            }
+            Self::SET => {
+                write!(f, "SET")
             }
         }
     }

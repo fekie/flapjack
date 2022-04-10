@@ -1,7 +1,6 @@
 # the program will register this line a comment
 CREATE "Checking (Bank)"
 CREATE "Savings (Bank)"
+INCREMENT "Checking (Bank)" 40
 INCREMENT "Checking (Bank)" 50 "this is a comment for this transactions"
-INCREMENT "Savings (Bank)" 40
 INCREMENT "Checking (Bank)" 25.50 "this is another comment for the transaction"
-SET "Savings (Bank)" 200 "felt like it"
