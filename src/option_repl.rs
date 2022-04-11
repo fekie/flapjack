@@ -1,6 +1,5 @@
-use crate::flapjack_stack::flapjack::{Command, Comment, Directive, FlapJack};
 use crate::flapjack_stack::FlapJackStack;
-use prettytable::{Cell, Row, Table};
+use prettytable::Table;
 use std::io::stdin;
 use std::io::{self, Write};
 use std::process::exit;
@@ -31,6 +30,14 @@ impl OptionRepl {
     }
 
     pub fn start(mut self) {
+        Self::print_divider();
+        println!(
+            "Loaded data from {}",
+            self.stack
+                .log_path
+                .clone()
+                .expect("There needs to be a log somewhere!")
+        );
         loop {
             self.next()
         }
@@ -48,7 +55,6 @@ impl OptionRepl {
             State::SetMenu => self.set_menu_interface(),
             State::IncrementMenu => self.increment_menu_interface(),
             State::DecrementMenu => self.decrement_menu_interface(),
-            _ => unimplemented!(),
         }
     }
 
@@ -409,7 +415,7 @@ impl OptionRepl {
         input_string.trim().to_owned()
     }
 
-    pub fn print_divider() {
+    fn print_divider() {
         println!("------------------------------------")
     }
 

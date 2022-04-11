@@ -154,12 +154,6 @@ pub struct FlapJackDb {
 }
 
 impl FlapJackDb {
-    pub fn new() -> Self {
-        Self {
-            wallet_amounts: HashMap::new(),
-        }
-    }
-
     pub fn from_flaps(flaps: &Vec<FlapJack>) -> Self {
         let mut db = Self {
             wallet_amounts: HashMap::new(),
