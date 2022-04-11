@@ -403,7 +403,8 @@ impl OptionRepl {
 
         // DO NOT USE table.printstd() IT DOES NOT WORK RIGHT ON WINDOWS
         let str = table.to_string();
-        println!("{str}");
+        print!("{str}");
+        io::stdout().flush().unwrap();
         self.state = State::Default;
     }
 
