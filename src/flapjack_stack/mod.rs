@@ -75,6 +75,61 @@ impl FlapJackStack {
         self.serialize_to_file(&self.log_path.clone().expect("This should not happen!"));
     }
 
+    pub fn set_wallet_amount(&mut self, wallet_name: &str, amount: i64, comment: Option<&str>) {
+        let flapjack = match comment {
+            Some(x) => FlapJack::Directive(Directive {
+                command: Command::SET,
+                params: vec![wallet_name.to_owned(), amount.to_string(), x.to_owned()],
+            }),
+            None => FlapJack::Directive(Directive {
+                command: Command::SET,
+                params: vec![wallet_name.to_owned(), amount.to_string()],
+            }),
+        };
+
+        self.push_flap(flapjack);
+    }
+
+    pub fn decrement_wallet_amount(
+        &mut self,
+        wallet_name: &str,
+        amount: i64,
+        comment: Option<&str>,
+    ) {
+        let flapjack = match comment {
+            Some(x) => FlapJack::Directive(Directive {
+                command: Command::DECREMENT,
+                params: vec![wallet_name.to_owned(), amount.to_string(), x.to_owned()],
+            }),
+            None => FlapJack::Directive(Directive {
+                command: Command::DECREMENT,
+                params: vec![wallet_name.to_owned(), amount.to_string()],
+            }),
+        };
+
+        self.push_flap(flapjack);
+    }
+
+    pub fn increment_wallet_amount(
+        &mut self,
+        wallet_name: &str,
+        amount: i64,
+        comment: Option<&str>,
+    ) {
+        let flapjack = match comment {
+            Some(x) => FlapJack::Directive(Directive {
+                command: Command::INCREMENT,
+                params: vec![wallet_name.to_owned(), amount.to_string(), x.to_owned()],
+            }),
+            None => FlapJack::Directive(Directive {
+                command: Command::INCREMENT,
+                params: vec![wallet_name.to_owned(), amount.to_string()],
+            }),
+        };
+
+        self.push_flap(flapjack);
+    }
+
     pub fn create_wallet(&mut self, wallet_name: &str) {
         let flapjack = FlapJack::Directive(Directive {
             command: Command::CREATE,

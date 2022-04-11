@@ -45,6 +45,9 @@ impl OptionRepl {
             State::Exit => self.exit(),
             State::CreateMenu => self.create_menu_interface(),
             State::DestroyMenu => self.destroy_menu_interface(),
+            State::SetMenu => self.set_menu_interface(),
+            State::IncrementMenu => self.increment_menu_interface(),
+            State::DecrementMenu => self.decrement_menu_interface(),
             _ => unimplemented!(),
         }
     }
@@ -53,15 +56,19 @@ impl OptionRepl {
         println!("Options: Set[0] Increment[1] Decrement[2] Create[3] Destroy[4] View[5] Exit[6]");
         let input = Self::wait_for_input();
 
-        if let Err(_) = input.parse::<u64>() {
-            Self::print_divider();
-            println!("Please enter an integer!");
-            return;
-        }
-
-        let choice_num = input.parse::<u64>().unwrap();
+        let choice_num = match input.parse::<u64>() {
+            Ok(x) => x,
+            Err(_) => {
+                Self::print_divider();
+                println!("Please enter an integer!");
+                return;
+            }
+        };
 
         match choice_num {
+            0 => self.state = State::SetMenu,
+            1 => self.state = State::IncrementMenu,
+            2 => self.state = State::DecrementMenu,
             3 => self.state = State::CreateMenu,
             4 => self.state = State::DestroyMenu,
             5 => self.state = State::View,
@@ -70,56 +77,245 @@ impl OptionRepl {
         };
     }
 
-    fn destroy_menu_interface(&mut self) {
-        let mut print_str = "Destroy which wallet?: ".to_owned();
-        let wallet_names = self.stack.return_wallet_names();
-        let wallet_name_count = wallet_names.len() as i64;
-        for (i, wallet_name) in wallet_names.iter().enumerate() {
-            print_str.push_str(wallet_name);
-            print_str.push('[');
-            print_str.push_str(&i.to_string());
-            print_str.push(']');
-            if (i + 1) as i64 != wallet_name_count {
-                print_str.push(' ')
-            } else {
-                print_str.push_str(" BACK[");
-                print_str.push_str(&(i + 1).to_string());
-                print_str.push(']');
+    fn decrement_menu_interface(&mut self) {
+        let question = "Decrement amount for which wallet?: ";
+        let chosen_wallet_option = self.tell_user_to_pick_wallet(question);
+
+        let chosen_wallet = match chosen_wallet_option {
+            Some(x) => x,
+            None => {
+                self.state = State::Default;
+                return;
             }
-        }
+        };
 
-        let minimum = 0 as i64;
-        let maximum = wallet_name_count;
+        println!("Decrement wallet amount by: ");
 
-        // wait until a valid option is chosen
-        let choice_num: i64;
+        let amount: i64;
         loop {
-            println!("{}", print_str);
             let input = Self::wait_for_input();
-            if let Err(_) = input.parse::<u64>() {
-                Self::print_divider();
-                println!("Please enter an integer!");
-                continue;
-            }
-
-            let num = input.parse::<i64>().unwrap();
-            if (num < minimum) || (num > maximum) {
-                Self::print_divider();
-                println!("Invalid option!");
-                continue;
-            }
-
-            choice_num = num;
-            break;
+            match input.parse::<i64>() {
+                Ok(x) => {
+                    amount = x;
+                    break;
+                }
+                Err(_) => {
+                    Self::print_divider();
+                    println!("Please enter an integer!");
+                    continue;
+                }
+            };
         }
 
-        // check to see if they wanted to go back
-        if choice_num == wallet_name_count {
-            self.state = State::Default;
-            return;
+        println!("Enter comment: ");
+        let comment = Self::wait_for_input();
+
+        if comment.len() != 0 {
+            println!(
+                "The wallet {}'s amount will be decremented by {} with the comment as \"{}\". Confirm? (y/n)",
+                chosen_wallet, amount, comment
+            );
+        } else {
+            println!(
+                "The wallet {}'s amount will be decremented by {}. Confirm? (y/n)",
+                chosen_wallet, amount
+            );
         }
 
-        let chosen_wallet = &wallet_names[choice_num as usize];
+        loop {
+            let answer: &str = &Self::wait_for_input();
+            match answer {
+                "y" => {
+                    if comment.len() != 0 {
+                        self.stack
+                            .decrement_wallet_amount(&chosen_wallet, amount, Some(&comment));
+                    } else {
+                        self.stack
+                            .decrement_wallet_amount(&chosen_wallet, amount, None);
+                    }
+
+                    println!(
+                        "Decremented wallet {}'s amount by {}",
+                        chosen_wallet, amount
+                    );
+                    break;
+                }
+                "n" => {
+                    println!("Did not decremented wallet amount.");
+                    break;
+                }
+                _ => {
+                    println!("Invalid answer! Please answer with 'y' or 'n'.");
+                    continue;
+                }
+            };
+        }
+
+        self.state = State::Default;
+    }
+
+    fn increment_menu_interface(&mut self) {
+        let question = "Increment amount for which wallet?: ";
+        let chosen_wallet_option = self.tell_user_to_pick_wallet(question);
+
+        let chosen_wallet = match chosen_wallet_option {
+            Some(x) => x,
+            None => {
+                self.state = State::Default;
+                return;
+            }
+        };
+
+        println!("Increment wallet amount by: ");
+
+        let amount: i64;
+        loop {
+            let input = Self::wait_for_input();
+            match input.parse::<i64>() {
+                Ok(x) => {
+                    amount = x;
+                    break;
+                }
+                Err(_) => {
+                    Self::print_divider();
+                    println!("Please enter an integer!");
+                    continue;
+                }
+            };
+        }
+
+        println!("Enter comment: ");
+        let comment = Self::wait_for_input();
+
+        if comment.len() != 0 {
+            println!(
+                "The wallet {}'s amount will be incremented by {} with the comment as \"{}\". Confirm? (y/n)",
+                chosen_wallet, amount, comment
+            );
+        } else {
+            println!(
+                "The wallet {}'s amount will be incremented by {}. Confirm? (y/n)",
+                chosen_wallet, amount
+            );
+        }
+
+        loop {
+            let answer: &str = &Self::wait_for_input();
+            match answer {
+                "y" => {
+                    if comment.len() != 0 {
+                        self.stack
+                            .increment_wallet_amount(&chosen_wallet, amount, Some(&comment));
+                    } else {
+                        self.stack
+                            .increment_wallet_amount(&chosen_wallet, amount, None);
+                    }
+
+                    println!(
+                        "Incremented wallet {}'s amount by {}",
+                        chosen_wallet, amount
+                    );
+                    break;
+                }
+                "n" => {
+                    println!("Did not increment wallet amount.");
+                    break;
+                }
+                _ => {
+                    println!("Invalid answer! Please answer with 'y' or 'n'.");
+                    continue;
+                }
+            };
+        }
+
+        self.state = State::Default;
+    }
+
+    fn set_menu_interface(&mut self) {
+        let question = "Change amount for which wallet?: ";
+        let chosen_wallet_option = self.tell_user_to_pick_wallet(question);
+
+        let chosen_wallet = match chosen_wallet_option {
+            Some(x) => x,
+            None => {
+                self.state = State::Default;
+                return;
+            }
+        };
+
+        println!("Set wallet amount to: ");
+
+        let amount: i64;
+        loop {
+            let input = Self::wait_for_input();
+            match input.parse::<i64>() {
+                Ok(x) => {
+                    amount = x;
+                    break;
+                }
+                Err(_) => {
+                    Self::print_divider();
+                    println!("Please enter an integer!");
+                    continue;
+                }
+            };
+        }
+
+        println!("Enter comment: ");
+        let comment = Self::wait_for_input();
+
+        if comment.len() != 0 {
+            println!(
+                "The wallet {}'s amount will be set to {} with the comment as \"{}\". Confirm? (y/n)",
+                chosen_wallet, amount, comment
+            );
+        } else {
+            println!(
+                "The wallet {}'s amount will be set to {}. Confirm? (y/n)",
+                chosen_wallet, amount
+            );
+        }
+
+        loop {
+            let answer: &str = &Self::wait_for_input();
+            match answer {
+                "y" => {
+                    if comment.len() != 0 {
+                        self.stack
+                            .set_wallet_amount(&chosen_wallet, amount, Some(&comment));
+                    } else {
+                        self.stack.set_wallet_amount(&chosen_wallet, amount, None);
+                    }
+
+                    println!("Set wallet {}'s amount to {}", chosen_wallet, amount);
+                    break;
+                }
+                "n" => {
+                    println!("Did not set wallet amount.");
+                    break;
+                }
+                _ => {
+                    println!("Invalid answer! Please answer with 'y' or 'n'.");
+                    continue;
+                }
+            };
+        }
+
+        self.state = State::Default;
+    }
+
+    fn destroy_menu_interface(&mut self) {
+        let question = "Destroy which wallet?: ";
+        let chosen_wallet_option = self.tell_user_to_pick_wallet(question);
+
+        let chosen_wallet = match chosen_wallet_option {
+            Some(x) => x,
+            None => {
+                self.state = State::Default;
+                return;
+            }
+        };
+
         println!(
             "The wallet {} will be destroyed. Confirm? (y/n)",
             chosen_wallet
@@ -215,5 +411,58 @@ impl OptionRepl {
 
     pub fn print_divider() {
         println!("------------------------------------")
+    }
+
+    // return a Some<wallet_name> if a wallet was chosen, None if they chose back
+    fn tell_user_to_pick_wallet(&self, question: &str) -> Option<String> {
+        let mut print_str = question.to_owned();
+        let wallet_names = self.stack.return_wallet_names();
+        let wallet_name_count = wallet_names.len() as i64;
+        for (i, wallet_name) in wallet_names.iter().enumerate() {
+            print_str.push_str(wallet_name);
+            print_str.push('[');
+            print_str.push_str(&i.to_string());
+            print_str.push(']');
+            if (i + 1) as i64 != wallet_name_count {
+                print_str.push(' ')
+            } else {
+                print_str.push_str(" BACK[");
+                print_str.push_str(&(i + 1).to_string());
+                print_str.push(']');
+            }
+        }
+
+        let minimum = 0 as i64;
+        let maximum = wallet_name_count;
+
+        // wait until a valid option is chosen
+        let choice_num: i64;
+        loop {
+            println!("{}", print_str);
+            let input = Self::wait_for_input();
+            if let Err(_) = input.parse::<u64>() {
+                Self::print_divider();
+                println!("Please enter an integer!");
+                continue;
+            }
+
+            let num = input.parse::<i64>().unwrap();
+            if (num < minimum) || (num > maximum) {
+                Self::print_divider();
+                println!("Invalid option!");
+                continue;
+            }
+
+            choice_num = num;
+            break;
+        }
+
+        // check to see if they wanted to go back
+        if choice_num == wallet_name_count {
+            None
+        } else {
+            let chosen_wallet = &wallet_names[choice_num as usize];
+            Some(chosen_wallet.clone())
+        }
     }
 }
