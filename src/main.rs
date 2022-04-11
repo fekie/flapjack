@@ -1,23 +1,15 @@
 mod file_io;
 mod flapjack_stack;
+mod option_repl;
 
-use clap::Parser;
 use flapjack_stack::flapjack_stack_builder::FlapJackStackBuilder;
-
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct Args {
-    #[clap(short, long)]
-    name: String,
-
-    #[clap(short, long, default_value_t = 1)]
-    count: u8,
-}
+use option_repl::OptionRepl;
 
 fn main() {
     let path = file_io::init_log_db();
     let content = file_io::read_raw_db_contents(&path).unwrap();
 
-    let stack = FlapJackStackBuilder::new(&content);
-    // todo write cli interface
+    let stack = FlapJackStackBuilder::new(&content).build();
+    let repl = OptionRepl::new(stack);
+    repl.start();
 }
