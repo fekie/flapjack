@@ -4,6 +4,12 @@
 # What is it?
 Flapjack is a command line program that helps you keep track of money in multiple accounts. It features a log-based database so changes can be edited by hand if needed.
 
+# Usage
+```
+git clone https://github.com/Chloe-Woahie/flapjack.git
+cargo run --release
+```
+
 # Program Examples
 ```
 ------------------------------------
