@@ -9,10 +9,14 @@ pub fn init_log_db() -> String {
     };
     let flapjack_data_dir = local_data_dir.join("flapjack");
     match fs::create_dir_all(&flapjack_data_dir) {
-        Ok(_) => println!(
-            "Created flapjack data directory at {}",
-            flapjack_data_dir.display()
-        ),
+        Ok(_) => {
+            // this will not work properly on unix systems
+            #[cfg(target_os = "windows")]
+            println!(
+                "Created flapjack data directory at {}",
+                flapjack_data_dir.display()
+            )
+        }
         Err(e) => match e.kind() {
             std::io::ErrorKind::AlreadyExists => (),
             _ => panic!("Could not create flapjack data directory ({})", e),
