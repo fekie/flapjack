@@ -5,7 +5,8 @@ use std::fs;
 fn main() {
     // we do this instead of loading a file
     let example_log = read_from_example_file("example_logs/directives/input.flap");
-    let mut foo = flapjack_stack::flapjack_stack_builder::FlapJackStackBuilder::new(&example_log);
+    let mut foo =
+        flapjack_stack::flapjack_stack_builder::FlapJackStackBuilder::new(&example_log, None);
     let bar = foo.build();
     bar.serialize_to_file("example_logs/directives/output.flap");
     println!("{:?}", bar.db);

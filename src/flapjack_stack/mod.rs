@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
 
-use self::flapjack::{Command, FlapJack};
+use self::flapjack::{Command, Directive, FlapJack};
 
 pub mod flapjack;
 pub mod flapjack_stack_builder;
@@ -11,14 +11,19 @@ pub mod flapjack_stack_builder;
 /// Each flap in the sequence retains its order.
 #[derive(Debug)]
 pub struct FlapJackStack {
-    pub flaps: Vec<FlapJack>,
+    pub flapjacks: Vec<FlapJack>,
     pub db: FlapJackDb,
+    pub log_path: Option<String>,
 }
 
 impl FlapJackStack {
-    pub fn new(flaps: Vec<FlapJack>) -> Self {
-        let db = FlapJackDb::from_flaps(&flaps);
-        Self { flaps, db }
+    pub fn new(flapjacks: Vec<FlapJack>, log_path: Option<String>) -> Self {
+        let db = FlapJackDb::from_flaps(&flapjacks);
+        Self {
+            flapjacks,
+            db,
+            log_path,
+        }
     }
 
     pub fn serialize_to_file(&self, path: &str) {
@@ -34,15 +39,48 @@ impl FlapJackStack {
 
     pub fn serialize(&self) -> String {
         let mut serialized = String::new();
-        for (i, flap) in self.flaps.iter().enumerate() {
-            serialized.push_str(&flap.serialize());
+        for (i, flapjack) in self.flapjacks.iter().enumerate() {
+            serialized.push_str(&flapjack.serialize());
 
             // add a new line if it is not the last line
-            if (i + 1) != self.flaps.len() {
+            if (i + 1) != self.flapjacks.len() {
                 serialized.push_str("\n");
             }
         }
         serialized
+    }
+
+    pub fn return_wallet_names(&self) -> Vec<String> {
+        let mut names = Vec::new();
+        for (wallet_name, _amount) in &self.db.wallet_amounts {
+            names.push(wallet_name.to_owned());
+        }
+        names
+    }
+
+    pub fn amount(&self, wallet_name: &str) -> f64 {
+        let amount = self
+            .db
+            .wallet_amounts
+            .get(wallet_name)
+            .expect("This shouldn't be here");
+
+        *amount
+    }
+
+    // updates the flap to the db and writes to file
+    pub fn push_flap(&mut self, flapjack: FlapJack) {
+        self.db.update(&flapjack);
+        self.flapjacks.push(flapjack);
+        self.serialize_to_file(&self.log_path.clone().expect("This should not happen!"));
+    }
+
+    pub fn create_wallet(&mut self, wallet_name: &str) {
+        let flapjack = FlapJack::Directive(Directive {
+            command: Command::CREATE,
+            params: vec![wallet_name.to_owned()],
+        });
+        self.push_flap(flapjack);
     }
 }
 
@@ -83,6 +121,25 @@ impl FlapJackDb {
         }
 
         db
+    }
+
+    // takes a flapjack, updates the db
+    pub fn update(&mut self, flap: &FlapJack) {
+        match flap {
+            FlapJack::Comment(_comment) => {}
+            FlapJack::Directive(directive) => {
+                let command = &directive.command;
+                let params = directive.params.as_slice();
+
+                match command {
+                    Command::CREATE => self.command_create(params),
+                    Command::INCREMENT => self.command_increment(params),
+                    Command::SET => self.command_set(params),
+                    Command::DESTROY => self.command_destroy(params),
+                    Command::DECREMENT => self.command_decrement(params),
+                }
+            }
+        }
     }
 
     pub fn command_create(&mut self, params: &[String]) {
@@ -166,10 +223,10 @@ mod tests {
         INCREMENT \"Checking (Bank)\" 50 \"this is a comment for this transactions\"
         ";
 
-        let seq = FlapJackStackBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log, None).build();
         let serialized_first = seq.serialize();
 
-        let seq_rebuilt = FlapJackStackBuilder::new(&serialized_first).build();
+        let seq_rebuilt = FlapJackStackBuilder::new(&serialized_first, None).build();
         let serialized_again = seq_rebuilt.serialize();
 
         assert_eq!(serialized_first, serialized_again)
@@ -178,7 +235,7 @@ mod tests {
     #[test]
     fn test_db_wallet_creation() {
         let log = "# the program will register this line a comment\nCREATE \"Checking (Bank)\"\nCREATE \"Savings (Bank)\"";
-        let seq = FlapJackStackBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log, None).build();
 
         seq.db
             .wallet_amounts
@@ -196,7 +253,7 @@ mod tests {
         INCREMENT \"Checking (Bank)\" 25.50 \"this is another comment for the transaction\"
         ";
 
-        let seq = FlapJackStackBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log, None).build();
         match seq.db.wallet_amounts.get("Checking (Bank)") {
             Some(balance) => {
                 assert_eq!(*balance, 75.5);
@@ -227,7 +284,7 @@ mod tests {
         SET \"Savings (Bank)\" 200 \"meow\"
         ";
 
-        let seq = FlapJackStackBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log, None).build();
         match seq.db.wallet_amounts.get("Checking (Bank)") {
             Some(balance) => {
                 assert_eq!(*balance, 75.5);
@@ -259,7 +316,7 @@ mod tests {
         DESTROY \"Savings (Bank)\"
         ";
 
-        let seq = FlapJackStackBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log, None).build();
 
         if let Some(_) = seq.db.wallet_amounts.get("Savings (Bank)") {
             panic!("Wallet was not destroyed!")
@@ -278,7 +335,7 @@ mod tests {
         DECREMENT \"Checking (Bank)\" 10.5 \"bought something\"
         ";
 
-        let seq = FlapJackStackBuilder::new(log).build();
+        let seq = FlapJackStackBuilder::new(log, None).build();
         match seq.db.wallet_amounts.get("Checking (Bank)") {
             Some(balance) => {
                 assert_eq!(*balance, 65.0);

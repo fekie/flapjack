@@ -1,18 +1,20 @@
 use crate::flapjack_stack::flapjack::{Command, Comment, Directive, FlapJack};
 use crate::flapjack_stack::FlapJackStack;
-use std::io::{self, Write};
-
+use prettytable::{Cell, Row, Table};
 use std::io::stdin;
+use std::io::{self, Write};
 use std::process::exit;
 
-// the u8 is the "stage" of the menu
 pub enum State {
     Default,
-    CreateMenu(u8),
-    IncrementMenu(u8),
-    SetMenu(u8),
-    DestroyMenu(u8),
-    DecrementMenu(u8),
+    View,
+    Invalid,
+    Exit,
+    CreateMenu,
+    IncrementMenu,
+    SetMenu,
+    DestroyMenu,
+    DecrementMenu,
 }
 
 pub struct OptionRepl {
@@ -38,37 +40,102 @@ impl OptionRepl {
         Self::print_divider();
         match &self.state {
             State::Default => self.handle_default(),
+            State::View => self.view(),
+            State::Invalid => self.invalid(),
+            State::Exit => self.exit(),
+            State::CreateMenu => self.create_menu_interface(),
+            State::DestroyMenu => self.destroy_menu_interface(),
             _ => unimplemented!(),
         }
     }
 
     fn handle_default(&mut self) {
-        println!("{}", Self::create_handle_default_string());
+        println!("Options: Set[0] Increment[1] Decrement[2] Create[3] Destroy[4] View[5] Exit[6]");
         let input = Self::wait_for_input();
 
         if let Err(_) = input.parse::<u64>() {
-            self.state = State::Default;
+            Self::print_divider();
             println!("Please enter an integer!");
             return;
         }
 
         let choice_num = input.parse::<u64>().unwrap();
 
-        // make the logic happen here
-        let next_state = match choice_num {
-            0 => exit(0),
-            _ => {
-                println!("Invalid option!");
-                State::Default
-            }
+        match choice_num {
+            3 => self.state = State::CreateMenu,
+            4 => self.state = State::DestroyMenu,
+            5 => self.state = State::View,
+            6 => self.state = State::Exit,
+            _ => self.state = State::Invalid,
         };
-
-        self.state = next_state
     }
 
-    fn create_handle_default_string() -> String {
-        let foo = "Options: Exit[0]";
-        foo.to_owned()
+    fn destroy_menu_interface(&mut self) {
+        let mut print_str = "Destroy which wallet?: ".to_owned();
+        for (i, wallet_name) in self.stack.return_wallet_names().iter().enumerate() {
+            print_str.push_str(wallet_name);
+            print_str.push('[');
+            print_str.push_str(&i.to_string());
+            print_str.push(']');
+        }
+
+        println!("{}", print_str);
+
+        exit(0)
+    }
+
+    fn create_menu_interface(&mut self) {
+        println!("Wallet Name: ");
+        let name = Self::wait_for_input();
+
+        println!("The wallet will be named {}. Confirm? (y/n)", name);
+
+        loop {
+            let answer: &str = &Self::wait_for_input();
+            match answer {
+                "y" => {
+                    self.stack.create_wallet(&name);
+                    println!("Created wallet: {}", name);
+                    break;
+                }
+                "n" => {
+                    println!("Did not create wallet.");
+                    break;
+                }
+                _ => {
+                    println!("Invalid answer! Please answer with 'y' or 'n'.");
+                    continue;
+                }
+            };
+        }
+
+        self.state = State::Default;
+    }
+
+    fn exit(&self) {
+        exit(0)
+    }
+
+    fn invalid(&mut self) {
+        println!("Invalid option!");
+        self.state = State::Default
+    }
+
+    fn view(&mut self) {
+        // Create the table
+        let mut table = Table::new();
+
+        // TODO: add time later
+        table.add_row(row!["Wallet", "Amount"]);
+        let wallet_names = self.stack.return_wallet_names();
+        for name in wallet_names.iter() {
+            let amount = self.stack.amount(&name);
+            table.add_row(row![name, amount]);
+        }
+
+        // Print the table to stdout
+        table.printstd();
+        self.state = State::Default;
     }
 
     fn wait_for_input() -> String {

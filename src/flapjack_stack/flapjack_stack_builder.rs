@@ -10,29 +10,30 @@ use crate::flapjack_stack::FlapJackStack;
 #[derive(Debug)]
 pub struct FlapJackStackBuilder {
     lines: Vec<String>,
+    log_path: Option<String>,
 }
 
 impl FlapJackStackBuilder {
-    pub fn new(raw_log: &str) -> Self {
+    pub fn new(raw_log: &str, log_path: Option<String>) -> Self {
         // go through a parsing process
         let lines = Self::split_and_clean_raw_log(raw_log);
-        Self { lines }
+        Self { lines, log_path }
     }
 
     pub fn from_file(path: &str) -> Self {
         let file = fs::read_to_string(path);
         let content = file.expect(&format!("Can't find file {}", path));
-        Self::new(&content)
+        Self::new(&content, Some(path.to_owned()))
     }
 
     pub fn build(&mut self) -> FlapJackStack {
-        let mut flaps: Vec<FlapJack> = Vec::new();
+        let mut flapjacks: Vec<FlapJack> = Vec::new();
 
         for mut line in self.lines.drain(..) {
             // this is the regex for splitting on whitespace, unless something is in quotations
             let mut split = Self::split_and_clean_line(&mut line);
 
-            let flap = match split[0].chars().nth(0).unwrap() {
+            let flapjack = match split[0].chars().nth(0).unwrap() {
                 // line is a comment
                 '#' => {
                     let comment = Comment::new(line.to_string());
@@ -58,10 +59,10 @@ impl FlapJackStackBuilder {
                 }
             };
 
-            flaps.push(flap)
+            flapjacks.push(flapjack)
         }
 
-        FlapJackStack::new(flaps)
+        FlapJackStack::new(flapjacks, self.log_path.clone())
     }
 
     fn split_and_clean_line(line: &mut String) -> Vec<String> {
@@ -133,17 +134,17 @@ mod test {
             CREATE account \"Checking (Bank)\"
             CREATE account \"Savings (Bank)\"";
 
-        let seq = FlapJackStackBuilder::new(log).build();
+        let stack = FlapJackStackBuilder::new(log, None).build();
 
         assert_eq!(
-            seq.flaps[0],
+            stack.flapjacks[0],
             FlapJack::Comment(Comment::new(
                 "# the program will register this line a comment".to_owned()
             ))
         );
 
         assert_eq!(
-            seq.flaps[1],
+            stack.flapjacks[1],
             FlapJack::Directive(Directive {
                 command: Command::CREATE,
                 params: vec!["account".to_owned(), "Checking (Bank)".to_owned()]
@@ -151,7 +152,7 @@ mod test {
         );
 
         assert_eq!(
-            seq.flaps[2],
+            stack.flapjacks[2],
             FlapJack::Directive(Directive {
                 command: Command::CREATE,
                 params: vec!["account".to_owned(), "Savings (Bank)".to_owned()]
