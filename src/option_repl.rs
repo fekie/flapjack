@@ -72,16 +72,51 @@ impl OptionRepl {
 
     fn destroy_menu_interface(&mut self) {
         let mut print_str = "Destroy which wallet?: ".to_owned();
-        for (i, wallet_name) in self.stack.return_wallet_names().iter().enumerate() {
+        let wallet_names = self.stack.return_wallet_names();
+        let wallet_name_count = wallet_names.len() as i64;
+        for (i, wallet_name) in wallet_names.iter().enumerate() {
             print_str.push_str(wallet_name);
             print_str.push('[');
             print_str.push_str(&i.to_string());
             print_str.push(']');
+            if (i + 1) as i64 != wallet_name_count {
+                print_str.push(' ')
+            } else {
+                print_str.push_str(" BACK[");
+                print_str.push_str(&(i + 1).to_string());
+                print_str.push(']');
+            }
         }
 
-        println!("{}", print_str);
+        let minimum = 0 as i64;
+        let maximum = wallet_name_count;
 
-        exit(0)
+        // wait until a valid option is chosen
+        let choice_num: i64;
+        loop {
+            println!("{}", print_str);
+            let input = Self::wait_for_input();
+            if let Err(_) = input.parse::<u64>() {
+                Self::print_divider();
+                println!("Please enter an integer!");
+                continue;
+            }
+
+            let num = input.parse::<i64>().unwrap();
+            if (num < minimum) || (num > maximum) {
+                Self::print_divider();
+                println!("Invalid option!");
+                continue;
+            }
+
+            choice_num = num;
+            break;
+        }
+
+        // check to see if they wanted to go back
+        if choice_num == wallet_name_count {
+            self.state = State::Default;
+        }
     }
 
     fn create_menu_interface(&mut self) {
