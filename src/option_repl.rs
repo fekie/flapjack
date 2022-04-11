@@ -117,15 +117,15 @@ impl OptionRepl {
         let comment = Self::wait_for_input();
 
         if comment.len() != 0 {
-            println!(
-                "The wallet {}'s amount will be decremented by {} with the comment as \"{}\". Confirm? (y/n)",
-                chosen_wallet, amount, comment
-            );
+            println!("Wallet: {chosen_wallet}");
+            println!("Amount: {amount}");
+            println!("Comment: \"{comment}\"");
+            println!("Is this correct? (y/n)");
         } else {
-            println!(
-                "The wallet {}'s amount will be decremented by {}. Confirm? (y/n)",
-                chosen_wallet, amount
-            );
+            println!("Wallet: {chosen_wallet}");
+            println!("Amount: {amount}");
+            println!("Comment: (NA)");
+            println!("Is this correct? (y/n)");
         }
 
         loop {
@@ -194,15 +194,15 @@ impl OptionRepl {
         let comment = Self::wait_for_input();
 
         if comment.len() != 0 {
-            println!(
-                "The wallet {}'s amount will be incremented by {} with the comment as \"{}\". Confirm? (y/n)",
-                chosen_wallet, amount, comment
-            );
+            println!("Wallet: {chosen_wallet}");
+            println!("Amount: {amount}");
+            println!("Comment: \"{comment}\"");
+            println!("Is this correct? (y/n)");
         } else {
-            println!(
-                "The wallet {}'s amount will be incremented by {}. Confirm? (y/n)",
-                chosen_wallet, amount
-            );
+            println!("Wallet: {chosen_wallet}");
+            println!("Amount: {amount}");
+            println!("Comment: (NA)");
+            println!("Is this correct? (y/n)");
         }
 
         loop {
@@ -271,15 +271,15 @@ impl OptionRepl {
         let comment = Self::wait_for_input();
 
         if comment.len() != 0 {
-            println!(
-                "The wallet {}'s amount will be set to {} with the comment as \"{}\". Confirm? (y/n)",
-                chosen_wallet, amount, comment
-            );
+            println!("Wallet: {chosen_wallet}");
+            println!("Amount: {amount}");
+            println!("Comment: \"{comment}\"");
+            println!("Is this correct? (y/n)");
         } else {
-            println!(
-                "The wallet {}'s amount will be set to {}. Confirm? (y/n)",
-                chosen_wallet, amount
-            );
+            println!("Wallet: {chosen_wallet}");
+            println!("Amount: {amount}");
+            println!("Comment: (NA)");
+            println!("Is this correct? (y/n)");
         }
 
         loop {
