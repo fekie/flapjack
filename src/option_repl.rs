@@ -435,6 +435,7 @@ impl OptionRepl {
         let mut print_str = question.to_owned();
         let wallet_names = self.stack.return_wallet_names();
         let wallet_name_count = wallet_names.len() as i64;
+
         for (i, wallet_name) in wallet_names.iter().enumerate() {
             print_str.push_str(wallet_name);
             print_str.push('[');
@@ -442,12 +443,12 @@ impl OptionRepl {
             print_str.push(']');
             if (i + 1) as i64 != wallet_name_count {
                 print_str.push(' ')
-            } else {
-                print_str.push_str(" BACK[");
-                print_str.push_str(&(i + 1).to_string());
-                print_str.push(']');
             }
         }
+
+        print_str.push_str(" BACK[");
+        print_str.push_str(&(wallet_name_count).to_string());
+        print_str.push(']');
 
         let minimum = 0 as i64;
         let maximum = wallet_name_count;
