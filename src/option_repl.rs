@@ -4,6 +4,17 @@ use std::io::stdin;
 use std::io::{self, Write};
 use std::process::exit;
 
+const VALID_STATES: [State; 7] = [
+    State::SetMenu,
+    State::IncrementMenu,
+    State::DecrementMenu,
+    State::CreateMenu,
+    State::DestroyMenu,
+    State::View,
+    State::Exit,
+];
+
+#[derive(Clone, Copy)]
 pub enum State {
     Default,
     View,
@@ -71,16 +82,11 @@ impl OptionRepl {
             }
         };
 
-        match choice_num {
-            0 => self.state = State::SetMenu,
-            1 => self.state = State::IncrementMenu,
-            2 => self.state = State::DecrementMenu,
-            3 => self.state = State::CreateMenu,
-            4 => self.state = State::DestroyMenu,
-            5 => self.state = State::View,
-            6 => self.state = State::Exit,
-            _ => self.state = State::Invalid,
-        };
+        // match the choice based on the number chosen
+        // this is the same as a match, just smaller
+        self.state = *VALID_STATES
+            .get(choice_num as usize)
+            .unwrap_or(&State::Invalid);
     }
 
     fn decrement_menu_interface(&mut self) {
