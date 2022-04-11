@@ -82,6 +82,14 @@ impl FlapJackStack {
         });
         self.push_flap(flapjack);
     }
+
+    pub fn destroy_wallet(&mut self, wallet_name: &str) {
+        let flapjack = FlapJack::Directive(Directive {
+            command: Command::DESTROY,
+            params: vec![wallet_name.to_owned()],
+        });
+        self.push_flap(flapjack);
+    }
 }
 
 #[derive(Debug)]
@@ -142,6 +150,7 @@ impl FlapJackDb {
         }
     }
 
+    // TODO: make sure wallet doesnt already exist
     pub fn command_create(&mut self, params: &[String]) {
         let wallet_type = params.get(0).expect("Wallet type argument was not found!");
 

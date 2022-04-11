@@ -116,7 +116,35 @@ impl OptionRepl {
         // check to see if they wanted to go back
         if choice_num == wallet_name_count {
             self.state = State::Default;
+            return;
         }
+
+        let chosen_wallet = &wallet_names[choice_num as usize];
+        println!(
+            "The wallet {} will be destroyed. Confirm? (y/n)",
+            chosen_wallet
+        );
+
+        loop {
+            let answer: &str = &Self::wait_for_input();
+            match answer {
+                "y" => {
+                    self.stack.destroy_wallet(&chosen_wallet);
+                    println!("Destroyed wallet: {}", chosen_wallet);
+                    break;
+                }
+                "n" => {
+                    println!("Did not destroy wallet.");
+                    break;
+                }
+                _ => {
+                    println!("Invalid answer! Please answer with 'y' or 'n'.");
+                    continue;
+                }
+            };
+        }
+
+        self.state = State::Default;
     }
 
     fn create_menu_interface(&mut self) {
