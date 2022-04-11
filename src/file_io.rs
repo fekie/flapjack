@@ -8,14 +8,14 @@ pub fn init_log_db() -> String {
         None => panic!("Could not find local data directory"),
     };
     let flapjack_data_dir = local_data_dir.join("flapjack");
-    match fs::create_dir(&flapjack_data_dir) {
+    match fs::create_dir_all(&flapjack_data_dir) {
         Ok(_) => println!(
             "Created flapjack data directory at {}",
             flapjack_data_dir.display()
         ),
         Err(e) => match e.kind() {
             std::io::ErrorKind::AlreadyExists => (),
-            _ => panic!("Could not create flapjack data directory"),
+            _ => panic!("Could not create flapjack data directory ({})", e),
         },
     }
     let file_path = &flapjack_data_dir.join("log_db.flap");

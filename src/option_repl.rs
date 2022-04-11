@@ -390,16 +390,20 @@ impl OptionRepl {
         // Create the table
         let mut table = Table::new();
 
-        // TODO: add time later
+        let mut total = 0.0;
         table.add_row(row!["Wallet", "Amount"]);
         let wallet_names = self.stack.return_wallet_names();
         for name in wallet_names.iter() {
             let amount = self.stack.amount(&name);
+            total += amount;
             table.add_row(row![name, amount]);
         }
 
-        // Print the table to stdout
-        table.printstd();
+        table.add_row(row!["Total", total]);
+
+        // DO NOT USE table.printstd() IT DOES NOT WORK RIGHT ON WINDOWS
+        let str = table.to_string();
+        println!("{str}");
         self.state = State::Default;
     }
 
