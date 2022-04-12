@@ -103,17 +103,17 @@ impl OptionRepl {
 
         println!("Decrement wallet amount by: ");
 
-        let amount: i64;
+        let amount: f64;
         loop {
             let input = Self::wait_for_input();
-            match input.parse::<i64>() {
+            match input.parse::<f64>() {
                 Ok(x) => {
                     amount = x;
                     break;
                 }
                 Err(_) => {
                     Self::print_divider();
-                    println!("Please enter an integer!");
+                    println!("Please enter a number!");
                     continue;
                 }
             };
@@ -180,10 +180,10 @@ impl OptionRepl {
 
         println!("Increment wallet amount by: ");
 
-        let amount: i64;
+        let amount: f64;
         loop {
             let input = Self::wait_for_input();
-            match input.parse::<i64>() {
+            match input.parse::<f64>() {
                 Ok(x) => {
                     amount = x;
                     break;
@@ -257,10 +257,10 @@ impl OptionRepl {
 
         println!("Set wallet amount to: ");
 
-        let amount: i64;
+        let amount: f64;
         loop {
             let input = Self::wait_for_input();
-            match input.parse::<i64>() {
+            match input.parse::<f64>() {
                 Ok(x) => {
                     amount = x;
                     break;
@@ -458,9 +458,9 @@ impl OptionRepl {
         loop {
             println!("{}", print_str);
             let input = Self::wait_for_input();
-            if let Err(_) = input.parse::<u64>() {
+            if let Err(_) = input.parse::<f64>() {
                 Self::print_divider();
-                println!("Please enter an integer!");
+                println!("Please enter a number!");
                 continue;
             }
 

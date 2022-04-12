@@ -75,7 +75,7 @@ impl FlapJackStack {
         self.serialize_to_file(&self.log_path.clone().expect("This should not happen!"));
     }
 
-    pub fn set_wallet_amount(&mut self, wallet_name: &str, amount: i64, comment: Option<&str>) {
+    pub fn set_wallet_amount(&mut self, wallet_name: &str, amount: f64, comment: Option<&str>) {
         let flapjack = match comment {
             Some(x) => FlapJack::Directive(Directive {
                 command: Command::SET,
@@ -93,7 +93,7 @@ impl FlapJackStack {
     pub fn decrement_wallet_amount(
         &mut self,
         wallet_name: &str,
-        amount: i64,
+        amount: f64,
         comment: Option<&str>,
     ) {
         let flapjack = match comment {
@@ -113,7 +113,7 @@ impl FlapJackStack {
     pub fn increment_wallet_amount(
         &mut self,
         wallet_name: &str,
-        amount: i64,
+        amount: f64,
         comment: Option<&str>,
     ) {
         let flapjack = match comment {
