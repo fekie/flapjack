@@ -11,5 +11,5 @@ fi
 cross build --release --target x86_64-unknown-linux-gnu
 cargo build --release
 
-7z a "./target/custom-builds/flapjack-v(VERSION)-x86_64-pc-windows-msvc.zip" ~/Git/flapjack/target/release/flapjack.exe
-7z a "./target/custom-builds/flapjack-v(VERSION)-x86_64-unknown-linux-gnu.tar.gz" ~/Git/flapjack/target/x86_64-unknown-linux-gnu/release/flapjack
+7z a "./target/custom-builds/flapjack-(VERSION)-x86_64-pc-windows-msvc.zip" ~/Git/flapjack/target/release/flapjack.exe
+7z a "./target/custom-builds/flapjack-(VERSION)-x86_64-unknown-linux-gnu.tar.gz" ~/Git/flapjack/target/x86_64-unknown-linux-gnu/release/flapjack
