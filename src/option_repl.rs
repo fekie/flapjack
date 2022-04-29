@@ -122,7 +122,7 @@ impl OptionRepl {
         println!("Enter comment: ");
         let comment = Self::wait_for_input();
 
-        if comment.len() != 0 {
+        if !comment.is_empty() {
             println!("Wallet: {chosen_wallet}");
             println!("Amount: {amount}");
             println!("Comment: \"{comment}\"");
@@ -138,7 +138,7 @@ impl OptionRepl {
             let answer: &str = &Self::wait_for_input();
             match answer {
                 "y" => {
-                    if comment.len() != 0 {
+                    if !comment.is_empty() {
                         self.stack
                             .decrement_wallet_amount(&chosen_wallet, amount, Some(&comment));
                     } else {
@@ -199,7 +199,7 @@ impl OptionRepl {
         println!("Enter comment: ");
         let comment = Self::wait_for_input();
 
-        if comment.len() != 0 {
+        if !comment.is_empty() {
             println!("Wallet: {chosen_wallet}");
             println!("Amount: {amount}");
             println!("Comment: \"{comment}\"");
@@ -215,7 +215,7 @@ impl OptionRepl {
             let answer: &str = &Self::wait_for_input();
             match answer {
                 "y" => {
-                    if comment.len() != 0 {
+                    if !comment.is_empty() {
                         self.stack
                             .increment_wallet_amount(&chosen_wallet, amount, Some(&comment));
                     } else {
@@ -276,7 +276,7 @@ impl OptionRepl {
         println!("Enter comment: ");
         let comment = Self::wait_for_input();
 
-        if comment.len() != 0 {
+        if !comment.is_empty() {
             println!("Wallet: {chosen_wallet}");
             println!("Amount: {amount}");
             println!("Comment: \"{comment}\"");
@@ -292,7 +292,7 @@ impl OptionRepl {
             let answer: &str = &Self::wait_for_input();
             match answer {
                 "y" => {
-                    if comment.len() != 0 {
+                    if !comment.is_empty() {
                         self.stack
                             .set_wallet_amount(&chosen_wallet, amount, Some(&comment));
                     } else {
@@ -400,7 +400,7 @@ impl OptionRepl {
         table.add_row(row!["Wallet", "Amount"]);
         let wallet_names = self.stack.return_wallet_names();
         for name in wallet_names.iter() {
-            let amount = self.stack.amount(&name);
+            let amount = self.stack.amount(name);
             total += amount;
             table.add_row(row![name, amount]);
         }
@@ -420,7 +420,6 @@ impl OptionRepl {
         let mut input_string = String::new();
         stdin()
             .read_line(&mut input_string)
-            .ok()
             .expect("Failed to read line");
 
         input_string.trim().to_owned()
@@ -450,7 +449,7 @@ impl OptionRepl {
         print_str.push_str(&(wallet_name_count).to_string());
         print_str.push(']');
 
-        let minimum = 0 as i64;
+        let minimum = 0;
         let maximum = wallet_name_count;
 
         // wait until a valid option is chosen
@@ -458,7 +457,7 @@ impl OptionRepl {
         loop {
             println!("{}", print_str);
             let input = Self::wait_for_input();
-            if let Err(_) = input.parse::<f64>() {
+            if input.parse::<f64>().is_err() {
                 Self::print_divider();
                 println!("Please enter a number!");
                 continue;
