@@ -22,18 +22,18 @@ impl FlapJackStackBuilder {
 
     pub fn from_file(path: &str) -> Self {
         let file = fs::read_to_string(path);
-        let content = file.expect(&format!("Can't find file {}", path));
+        let content = file.unwrap_or_else(|_| panic!("Can't find file {}", path));
         Self::new(&content, Some(path.to_owned()))
     }
 
     pub fn build(&mut self) -> FlapJackStack {
         let mut flapjacks: Vec<FlapJack> = Vec::new();
 
-        for mut line in self.lines.drain(..) {
+        for line in self.lines.drain(..) {
             // this is the regex for splitting on whitespace, unless something is in quotations
-            let mut split = Self::split_and_clean_line(&mut line);
+            let mut split = Self::split_and_clean_line(&line);
 
-            let flapjack = match split[0].chars().nth(0).unwrap() {
+            let flapjack = match split[0].chars().next().unwrap() {
                 // line is a comment
                 '#' => {
                     let comment = Comment::new(line.to_string());
@@ -43,15 +43,15 @@ impl FlapJackStackBuilder {
                 _ => {
                     let command_string: &str = &split.remove(0);
                     let command = match command_string {
-                        "CREATE" => Command::CREATE,
-                        "INCREMENT" => Command::INCREMENT,
-                        "SET" => Command::SET,
-                        "DESTROY" => Command::DESTROY,
-                        "DECREMENT" => Command::DECREMENT,
+                        "CREATE" => Command::Create,
+                        "INCREMENT" => Command::Increment,
+                        "SET" => Command::Set,
+                        "DESTROY" => Command::Destroy,
+                        "DECREMENT" => Command::Decrement,
                         _ => panic!("Command \"{}\" does not exist!", command_string),
                     };
                     let directive = Directive {
-                        command: command,
+                        command,
                         params: split,
                     };
 
@@ -65,28 +65,28 @@ impl FlapJackStackBuilder {
         FlapJackStack::new(flapjacks, self.log_path.clone())
     }
 
-    fn split_and_clean_line(line: &mut String) -> Vec<String> {
+    fn split_and_clean_line(line: &str) -> Vec<String> {
         let re = Regex::new(r#"[^\s"']+|"([^"]*)"|'([^']*)'"#).unwrap();
         let mut split = re
-            .find_iter(&line)
-            .filter_map(|chunk| Some(chunk.as_str().to_owned()))
+            .find_iter(line)
+            .map(|chunk| chunk.as_str().to_owned())
             .collect::<Vec<String>>();
 
         // remove any quotes left
         for part in split.iter_mut() {
-            let split_on_quotes = part.split("\"");
+            let split_on_quotes = part.split('\"');
             *part = split_on_quotes.collect();
         }
         split
     }
 
     fn split_and_clean_raw_log(raw_log: &str) -> Vec<String> {
-        let no_carriage_returns = Self::remove_carriage_returns(&raw_log);
-        let split = no_carriage_returns.split("\n").collect::<Vec<&str>>();
+        let no_carriage_returns = Self::remove_carriage_returns(raw_log);
+        let split = no_carriage_returns.split('\n').collect::<Vec<&str>>();
         let mut cleaned: Vec<String> = Vec::new();
 
         for line in split {
-            if Self::remove_whitespace(line) == "" {
+            if Self::remove_whitespace(line).is_empty() {
                 continue;
             }
             cleaned.push(line.to_owned());
@@ -96,7 +96,7 @@ impl FlapJackStackBuilder {
     }
 
     fn remove_carriage_returns(s: &str) -> String {
-        s.split("\r").collect()
+        s.split('\r').collect()
     }
 
     fn remove_whitespace(s: &str) -> String {
@@ -146,7 +146,7 @@ mod test {
         assert_eq!(
             stack.flapjacks[1],
             FlapJack::Directive(Directive {
-                command: Command::CREATE,
+                command: Command::Create,
                 params: vec!["account".to_owned(), "Checking (Bank)".to_owned()]
             })
         );
@@ -154,7 +154,7 @@ mod test {
         assert_eq!(
             stack.flapjacks[2],
             FlapJack::Directive(Directive {
-                command: Command::CREATE,
+                command: Command::Create,
                 params: vec!["account".to_owned(), "Savings (Bank)".to_owned()]
             })
         );

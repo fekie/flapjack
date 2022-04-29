@@ -21,7 +21,7 @@ fn flaps_from_file() {
     assert_eq!(
         stack.flapjacks[1],
         FlapJack::Directive(Directive {
-            command: Command::CREATE,
+            command: Command::Create,
             params: vec!["Checking (Bank)".to_owned()]
         })
     );
@@ -29,7 +29,7 @@ fn flaps_from_file() {
     assert_eq!(
         stack.flapjacks[2],
         FlapJack::Directive(Directive {
-            command: Command::CREATE,
+            command: Command::Create,
             params: vec!["Savings (Bank)".to_owned()]
         })
     );

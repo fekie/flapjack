@@ -34,7 +34,7 @@ impl FlapJackStack {
             .unwrap();
 
         let serialized = self.serialize();
-        file.write(serialized.as_bytes()).unwrap();
+        file.write_all(serialized.as_bytes()).unwrap();
     }
 
     pub fn serialize(&self) -> String {
@@ -44,7 +44,7 @@ impl FlapJackStack {
 
             // add a new line if it is not the last line
             if (i + 1) != self.flapjacks.len() {
-                serialized.push_str("\n");
+                serialized.push('\n');
             }
         }
         serialized
@@ -52,7 +52,7 @@ impl FlapJackStack {
 
     pub fn return_wallet_names(&self) -> Vec<String> {
         let mut names = Vec::new();
-        for (wallet_name, _amount) in &self.db.wallet_amounts {
+        for wallet_name in self.db.wallet_amounts.keys() {
             names.push(wallet_name.to_owned());
         }
         names
@@ -78,11 +78,11 @@ impl FlapJackStack {
     pub fn set_wallet_amount(&mut self, wallet_name: &str, amount: f64, comment: Option<&str>) {
         let flapjack = match comment {
             Some(x) => FlapJack::Directive(Directive {
-                command: Command::SET,
+                command: Command::Set,
                 params: vec![wallet_name.to_owned(), amount.to_string(), x.to_owned()],
             }),
             None => FlapJack::Directive(Directive {
-                command: Command::SET,
+                command: Command::Set,
                 params: vec![wallet_name.to_owned(), amount.to_string()],
             }),
         };
@@ -98,11 +98,11 @@ impl FlapJackStack {
     ) {
         let flapjack = match comment {
             Some(x) => FlapJack::Directive(Directive {
-                command: Command::DECREMENT,
+                command: Command::Decrement,
                 params: vec![wallet_name.to_owned(), amount.to_string(), x.to_owned()],
             }),
             None => FlapJack::Directive(Directive {
-                command: Command::DECREMENT,
+                command: Command::Decrement,
                 params: vec![wallet_name.to_owned(), amount.to_string()],
             }),
         };
@@ -118,11 +118,11 @@ impl FlapJackStack {
     ) {
         let flapjack = match comment {
             Some(x) => FlapJack::Directive(Directive {
-                command: Command::INCREMENT,
+                command: Command::Increment,
                 params: vec![wallet_name.to_owned(), amount.to_string(), x.to_owned()],
             }),
             None => FlapJack::Directive(Directive {
-                command: Command::INCREMENT,
+                command: Command::Increment,
                 params: vec![wallet_name.to_owned(), amount.to_string()],
             }),
         };
@@ -132,7 +132,7 @@ impl FlapJackStack {
 
     pub fn create_wallet(&mut self, wallet_name: &str) {
         let flapjack = FlapJack::Directive(Directive {
-            command: Command::CREATE,
+            command: Command::Create,
             params: vec![wallet_name.to_owned()],
         });
         self.push_flap(flapjack);
@@ -140,7 +140,7 @@ impl FlapJackStack {
 
     pub fn destroy_wallet(&mut self, wallet_name: &str) {
         let flapjack = FlapJack::Directive(Directive {
-            command: Command::DESTROY,
+            command: Command::Destroy,
             params: vec![wallet_name.to_owned()],
         });
         self.push_flap(flapjack);
@@ -167,11 +167,11 @@ impl FlapJackDb {
                     let params = directive.params.as_slice();
 
                     match command {
-                        Command::CREATE => db.command_create(params),
-                        Command::INCREMENT => db.command_increment(params),
-                        Command::SET => db.command_set(params),
-                        Command::DESTROY => db.command_destroy(params),
-                        Command::DECREMENT => db.command_decrement(params),
+                        Command::Create => db.command_create(params),
+                        Command::Increment => db.command_increment(params),
+                        Command::Set => db.command_set(params),
+                        Command::Destroy => db.command_destroy(params),
+                        Command::Decrement => db.command_decrement(params),
                     }
                 }
             }
@@ -189,11 +189,11 @@ impl FlapJackDb {
                 let params = directive.params.as_slice();
 
                 match command {
-                    Command::CREATE => self.command_create(params),
-                    Command::INCREMENT => self.command_increment(params),
-                    Command::SET => self.command_set(params),
-                    Command::DESTROY => self.command_destroy(params),
-                    Command::DECREMENT => self.command_decrement(params),
+                    Command::Create => self.command_create(params),
+                    Command::Increment => self.command_increment(params),
+                    Command::Set => self.command_set(params),
+                    Command::Destroy => self.command_destroy(params),
+                    Command::Decrement => self.command_decrement(params),
                 }
             }
         }
@@ -215,7 +215,7 @@ impl FlapJackDb {
             .parse::<f64>()
             .expect("Amount could not be parsed to a float.");
 
-        match self.wallet_amounts.get_mut(&wallet_type.to_string()) {
+        match self.wallet_amounts.get_mut(wallet_type) {
             Some(wallet_balance) => {
                 *wallet_balance += amount;
             }
@@ -234,7 +234,7 @@ impl FlapJackDb {
             .parse::<f64>()
             .expect("Amount could not be parsed to a float.");
 
-        match self.wallet_amounts.get_mut(&wallet_type.to_string()) {
+        match self.wallet_amounts.get_mut(wallet_type) {
             Some(wallet_balance) => {
                 *wallet_balance = amount;
             }
@@ -258,7 +258,7 @@ impl FlapJackDb {
             .parse::<f64>()
             .expect("Amount could not be parsed to a float.");
 
-        match self.wallet_amounts.get_mut(&wallet_type.to_string()) {
+        match self.wallet_amounts.get_mut(wallet_type) {
             Some(wallet_balance) => {
                 *wallet_balance -= amount;
             }
@@ -376,7 +376,7 @@ mod tests {
 
         let seq = FlapJackStackBuilder::new(log, None).build();
 
-        if let Some(_) = seq.db.wallet_amounts.get("Savings (Bank)") {
+        if seq.db.wallet_amounts.get("Savings (Bank)").is_some() {
             panic!("Wallet was not destroyed!")
         }
     }

@@ -2,29 +2,29 @@ use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Command {
-    CREATE,
-    INCREMENT,
-    SET,
-    DESTROY,
-    DECREMENT,
+    Create,
+    Increment,
+    Set,
+    Destroy,
+    Decrement,
 }
 
 impl fmt::Display for Command {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::CREATE => {
+            Self::Create => {
                 write!(f, "CREATE")
             }
-            Self::INCREMENT => {
+            Self::Increment => {
                 write!(f, "INCREMENT")
             }
-            Self::SET => {
+            Self::Set => {
                 write!(f, "SET")
             }
-            Self::DESTROY => {
+            Self::Destroy => {
                 write!(f, "DESTROY")
             }
-            Self::DECREMENT => {
+            Self::Decrement => {
                 write!(f, "DECREMENT")
             }
         }
@@ -67,7 +67,7 @@ impl Directive {
             // if the parameter has whitespace, it needs to be surrounded by quotes
             if param.contains(char::is_whitespace) {
                 let mut param_with_quotes = String::from('\"');
-                param_with_quotes.push_str(&param);
+                param_with_quotes.push_str(param);
                 param_with_quotes.push('\"');
                 combined.push_str(&param_with_quotes);
             } else {
