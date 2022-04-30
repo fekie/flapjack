@@ -8,12 +8,14 @@ mod option_repl;
 use flapjack_stack::flapjack_stack_builder::FlapJackStackBuilder;
 use option_repl::OptionRepl;
 use self_update::cargo_crate_version;
+use std::process::exit;
 
 // TODO: show last comment on the table (maybe)
 // or add a way to check comments without using the log
 fn main() {
     if try_update().is_ok() {
-        panic!("Binary updated. Please restart the program!")
+        println!("Binary updated. Please restart the program!");
+        exit(0)
     }
     let path = file_io::init_log_db();
 
