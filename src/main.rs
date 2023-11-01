@@ -14,7 +14,7 @@ use std::process::exit;
 // or add a way to check comments without using the log
 fn main() {
     if try_update().is_ok() {
-        println!("Binary updated. Please restart the program!");
+        eprintln!("Binary updated. Please restart the program!");
         exit(0)
     }
     let path = file_io::init_log_db();
