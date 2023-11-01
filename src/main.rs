@@ -12,16 +12,20 @@ use std::process::exit;
 
 // TODO: show last comment on the table (maybe)
 // or add a way to check comments without using the log
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // We check to make sure that there is not a new update available
     if try_update().is_ok() {
         eprintln!("Binary updated. Please restart the program!");
         exit(0)
     }
-    let path = file_io::init_log_db();
+
+    let path = file_io::init_log_db()?;
 
     let stack = FlapJackStackBuilder::from_file(&path).build();
     let repl = OptionRepl::new(stack);
     repl.start();
+
+    Ok(())
 }
 
 /// If this function returns an Ok, the program updated itself and the binary should likely be restarted
