@@ -124,12 +124,12 @@ impl OptionRepl {
 
         if !comment.is_empty() {
             println!("Wallet: {chosen_wallet}");
-            println!("Amount: {amount}");
+            println!("Amount: {amount:.2}");
             println!("Comment: \"{comment}\"");
             println!("Is this correct? (y/n)");
         } else {
             println!("Wallet: {chosen_wallet}");
-            println!("Amount: {amount}");
+            println!("Amount: {amount:.2}");
             println!("Comment: (NA)");
             println!("Is this correct? (y/n)");
         }
@@ -201,12 +201,12 @@ impl OptionRepl {
 
         if !comment.is_empty() {
             println!("Wallet: {chosen_wallet}");
-            println!("Amount: {amount}");
+            println!("Amount: {amount:.2}");
             println!("Comment: \"{comment}\"");
             println!("Is this correct? (y/n)");
         } else {
             println!("Wallet: {chosen_wallet}");
-            println!("Amount: {amount}");
+            println!("Amount: {amount:.2}");
             println!("Comment: (NA)");
             println!("Is this correct? (y/n)");
         }
@@ -224,7 +224,7 @@ impl OptionRepl {
                     }
 
                     println!(
-                        "Incremented wallet {}'s amount by {}",
+                        "Incremented wallet {}'s amount by {:.2}",
                         chosen_wallet, amount
                     );
                     break;
@@ -278,12 +278,12 @@ impl OptionRepl {
 
         if !comment.is_empty() {
             println!("Wallet: {chosen_wallet}");
-            println!("Amount: {amount}");
+            println!("Amount: {amount:.2}");
             println!("Comment: \"{comment}\"");
             println!("Is this correct? (y/n)");
         } else {
             println!("Wallet: {chosen_wallet}");
-            println!("Amount: {amount}");
+            println!("Amount: {amount:.2}");
             println!("Comment: (NA)");
             println!("Is this correct? (y/n)");
         }
@@ -299,7 +299,7 @@ impl OptionRepl {
                         self.stack.set_wallet_amount(&chosen_wallet, amount, None);
                     }
 
-                    println!("Set wallet {}'s amount to {}", chosen_wallet, amount);
+                    println!("Set wallet {}'s amount to {:.2}", chosen_wallet, amount);
                     break;
                 }
                 "n" => {
@@ -402,10 +402,12 @@ impl OptionRepl {
         for name in wallet_names.iter() {
             let amount = self.stack.amount(name);
             total += amount;
-            table.add_row(row![name, amount]);
+            // We make sure that the amount only has 2 decimal places
+            table.add_row(row![name, format!("{amount:.2}")]);
         }
 
-        table.add_row(row!["Total", total]);
+        // We make sure that the total only has 2 decimal places
+        table.add_row(row!["Total", format!("{total:.2}")]);
 
         // DO NOT USE table.printstd() IT DOES NOT WORK RIGHT ON WINDOWS
         let str = table.to_string();
