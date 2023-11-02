@@ -153,7 +153,7 @@ impl OptionRepl {
                     break;
                 }
                 "n" => {
-                    println!("Did not decremented wallet amount.");
+                    println!("Did not decrement wallet amount.");
                     break;
                 }
                 _ => {
