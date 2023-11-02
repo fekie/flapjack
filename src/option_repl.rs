@@ -147,7 +147,7 @@ impl OptionRepl {
                     }
 
                     println!(
-                        "Decremented wallet {}'s amount by {}",
+                        "Decremented wallet {}'s amount by {:.2}.",
                         chosen_wallet, amount
                     );
                     break;
