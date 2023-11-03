@@ -52,9 +52,14 @@ impl FlapJackStack {
 
     pub fn return_wallet_names(&self) -> Vec<String> {
         let mut names = Vec::new();
+
         for wallet_name in self.db.wallet_amounts.keys() {
             names.push(wallet_name.to_owned());
         }
+
+        // Sort the names alphabetically
+        names.sort();
+
         names
     }
 
