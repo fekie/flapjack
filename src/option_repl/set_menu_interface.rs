@@ -51,7 +51,7 @@ impl OptionRepl {
             let trimmed = answer.trim();
 
             match trimmed {
-                "|" | "y" => {
+                "" | "y" => {
                     if !comment.is_empty() {
                         self.stack
                             .set_wallet_amount(&chosen_wallet, amount, Some(&comment));
