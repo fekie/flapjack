@@ -9,10 +9,14 @@ edition = "2018"
 dirs = "4.0.0"
 regex = "1"
 prettytable-rs = "0.6.1"
-self_update = {version = "0.30.0", default-features = false, features=["archive-tar", "archive-zip", "compression-flate2", "compression-zip-deflate", "rustls"]}
+self_update = { version = "0.30.0", default-features = false, features = [
+    "archive-tar",
+    "archive-zip",
+    "compression-flate2",
+    "compression-zip-deflate",
+    "rustls",
+] }
 thiserror = "1.0.50"
 
 [workspace]
-members = [
-    "manual_tests/*",
-]
+members = ["manual_tests/*"]
