@@ -6,16 +6,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dirs = "4.0.0"
+dirs = "5.0.1"
 regex = "1"
-prettytable-rs = "0.6.1"
-self_update = { version = "0.30.0", default-features = false, features = [
-    "archive-tar",
-    "archive-zip",
-    "compression-flate2",
-    "compression-zip-deflate",
-    "rustls",
-] }
+prettytable-rs = "0.10.0"
 thiserror = "1.0.50"
 
 [workspace]
