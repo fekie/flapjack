@@ -12,7 +12,7 @@ impl OptionRepl {
             let trimmed = answer.trim();
 
             match trimmed {
-                "Y" => {
+                "" | "y" => {
                     self.stack.create_wallet(&name);
                     println!("Created wallet: {}", name);
                     break;
