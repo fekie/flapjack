@@ -14,24 +14,26 @@ impl OptionRepl {
         };
 
         println!(
-            "The wallet {} will be destroyed. Confirm? (y/n)",
+            "The wallet {} will be destroyed. Confirm? (y/N)",
             chosen_wallet
         );
 
         loop {
-            let answer: &str = &Self::wait_for_input();
-            match answer {
+            let answer = Self::wait_for_input().to_lowercase();
+            let trimmed = answer.trim();
+
+            match trimmed {
                 "y" => {
                     self.stack.destroy_wallet(&chosen_wallet);
                     println!("Destroyed wallet: {}", chosen_wallet);
                     break;
                 }
-                "n" => {
+                "" | "n" => {
                     println!("Did not destroy wallet.");
                     break;
                 }
                 _ => {
-                    println!("Invalid answer! Please answer with 'y' or 'n'.");
+                    println!("Invalid answer! Please answer with 'y' or 'n' or hit enter to accept the default.");
                     continue;
                 }
             };

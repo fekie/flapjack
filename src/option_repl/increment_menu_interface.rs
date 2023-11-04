@@ -38,18 +38,20 @@ impl OptionRepl {
             println!("Wallet: {chosen_wallet}");
             println!("Amount: {amount:.2}");
             println!("Comment: \"{comment}\"");
-            println!("Is this correct? (y/n)");
+            println!("Is this correct? (Y/n)");
         } else {
             println!("Wallet: {chosen_wallet}");
             println!("Amount: {amount:.2}");
             println!("Comment: (NA)");
-            println!("Is this correct? (y/n)");
+            println!("Is this correct? (Y/n)");
         }
 
         loop {
-            let answer: &str = &Self::wait_for_input();
-            match answer {
-                "y" => {
+            let answer = Self::wait_for_input().to_lowercase();
+            let trimmed = answer.trim();
+
+            match trimmed {
+                "" | "y" => {
                     if !comment.is_empty() {
                         self.stack
                             .increment_wallet_amount(&chosen_wallet, amount, Some(&comment));
@@ -69,7 +71,7 @@ impl OptionRepl {
                     break;
                 }
                 _ => {
-                    println!("Invalid answer! Please answer with 'y' or 'n'.");
+                    println!("Invalid answer! Please answer with 'y' or 'n' or hit enter to accept the default.");
                     continue;
                 }
             };

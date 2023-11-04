@@ -5,12 +5,14 @@ impl OptionRepl {
         println!("Wallet Name: ");
         let name = Self::wait_for_input();
 
-        println!("The wallet will be named {}. Confirm? (y/n)", name);
+        println!("The wallet will be named {}. Confirm? (Y/n)", name);
 
         loop {
-            let answer: &str = &Self::wait_for_input();
-            match answer {
-                "y" => {
+            let answer = Self::wait_for_input().to_lowercase();
+            let trimmed = answer.trim();
+
+            match trimmed {
+                "Y" => {
                     self.stack.create_wallet(&name);
                     println!("Created wallet: {}", name);
                     break;
@@ -20,7 +22,7 @@ impl OptionRepl {
                     break;
                 }
                 _ => {
-                    println!("Invalid answer! Please answer with 'y' or 'n'.");
+                    println!("Invalid answer! Please answer with 'y' or 'n' or hit enter to accept the default.");
                     continue;
                 }
             };
