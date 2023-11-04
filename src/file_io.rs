@@ -24,20 +24,14 @@ pub fn init_log_db() -> Result<String, InitLogDbError> {
     };
 
     let flapjack_data_dir = local_data_dir.join("flapjack");
-    match fs::create_dir_all(&flapjack_data_dir) {
-        Ok(_) => {
-            // this will not work properly on unix systems
-            #[cfg(target_os = "windows")]
-            println!(
-                "Created flapjack data directory at {}",
-                flapjack_data_dir.display()
-            )
-        }
-        Err(e) => match e.kind() {
+
+    if let Err(e) = fs::create_dir_all(&flapjack_data_dir) {
+        match e.kind() {
             std::io::ErrorKind::AlreadyExists => (),
             _ => return Err(InitLogDbError::CouldNotCreateFlapjackDataDirectory(e)),
-        },
+        }
     }
+
     let file_path = &flapjack_data_dir.join("log_db.flap");
 
     let file = OpenOptions::new()
